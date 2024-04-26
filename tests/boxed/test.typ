@@ -23,3 +23,12 @@
 #h(1cm) #box(width: 40%, fill: yellow, $ g + h $)
 
 #h(1cm) #box(fill: yellow, $ g + h $)
+
+// Columns
+#block(height: 2cm, columns(2)[
+  $ a + b \
+    c + d \
+    e + f \
+    g + h \
+    i + j $
+])

@@ -19,3 +19,12 @@
     $ a + b $
   ]
 }
+
+// Test break over pages with different margins.
+
+#set page(margin: (inside: 2cm), height: 2cm)
+
+$ a + b \
+  c + d \
+  e + f \
+  g + h $
