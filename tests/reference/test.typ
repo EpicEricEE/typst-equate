@@ -1,7 +1,6 @@
 #import "/src/lib.typ": equate
-#import "/tests/template.typ": template
 
-#show: template
+#set page(width: 6cm, height: auto, margin: 1em)
 #show: equate.with(sub-numbering: true)
 
 // Test references to equations with sub-numbering

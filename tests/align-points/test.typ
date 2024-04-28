@@ -1,10 +1,7 @@
 #import "/src/lib.typ": equate
-#import "/tests/template.typ": template
 
-#show: template
+#set page(width: 8cm, height: auto, margin: 1em)
 #show: equate
-
-#set page(width: 8cm)
 
 // Test re-implemented alignment algorithm.
 
