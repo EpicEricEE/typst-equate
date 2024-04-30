@@ -86,7 +86,6 @@
 // accordingly. 
 #let replace-labels(
   lines,
-  sub-numbering,
   number-mode,
   numbering,
   supplement,
@@ -288,7 +287,6 @@
 
     let lines = replace-labels(
       to-lines(it),
-      sub-numbering,
       number-mode,
       it.numbering,
       it.supplement,
@@ -408,7 +406,9 @@
     let nums = if state.at(it.element.location()) {
       it.element.body.value
     } else {
-      (it.element.body.value.sum() - 1,)
+      // (3, 1): 3 + 1 - 1 = 3
+      // (3, 2): 3 + 2 - 1 = 4
+      (it.element.body.value.first() + it.element.body.value.slice(1).sum(default: 1) - 1,)
     }
 
     let num = numbering(

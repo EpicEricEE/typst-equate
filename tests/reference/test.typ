@@ -21,6 +21,12 @@ $ a + b \
   c + d #<no-sub> \
   e + f $
 
-@outer, @inner, @no-sub
+#show: equate.with(number-mode: "label")
+
+$ a + b \
+  c + d #<labelled> \
+  e + f $
+
+@outer, @inner, @no-sub, @labelled
 
 See @inner[] and @outer[eq.]
