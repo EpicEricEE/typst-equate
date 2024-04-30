@@ -247,7 +247,7 @@
 ) = {
   assert(
     number-mode in ("line", "label"),
-    message: "Invalid number mode. Must be either 'line' or 'label'."
+    message: "expected \"line\" or \"label\" for number-mode, found " + repr(number-mode)
   )
 
   show math.equation.where(block: true): it => {
@@ -410,6 +410,11 @@
       // (3, 2): 3 + 2 - 1 = 4
       (it.element.body.value.first() + it.element.body.value.slice(1).sum(default: 1) - 1,)
     }
+
+    assert(
+      it.element.numbering != none,
+      message: "cannot reference equation without numbering."
+    )
 
     let num = numbering(
       if type(it.element.numbering) == str {
