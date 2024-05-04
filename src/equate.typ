@@ -94,51 +94,56 @@
   // Main equation number.
   let main-number = counter(math.equation).get()
 
+  // Indices of lines that contain a label.
+  let labelled = lines
+    .enumerate()
+    .filter(((i, line)) => {
+      if line.len() == 0 { return false }
+      if line.last().func() != raw { return false }
+      if line.last().lang != "typc" { return false }
+      if line.last().text.match(regex("^<.+>$")) == none { return false }
+      return true
+    })
+    .map(((i, _)) => i)
+
   // Indices of numbered lines in this equation.
-  let numbered = if number-mode == "line" or has-label {
+  let numbered = if number-mode == "line" {
+    range(lines.len())
+  } else if labelled.len() == 0 and has-label {
+    // Only outer label, so number all lines.
     range(lines.len())
   } else {
-    lines.enumerate()
-      .filter(((i, line)) => {
-        if line.len() == 0 { return false }
-        if line.last().func() != raw { return false }
-        if line.last().lang != "typc" { return false }
-        if line.last().text.match(regex("^<.+>$")) == none { return false }
-        return true
-      })
-      .map(((i, _)) => i)
+    labelled
   }
 
-  lines.enumerate()
-    .map(((i, line)) => {
-      if line.len() == 0 { return line }
+  (
+    numbered,
+    lines.enumerate()
+      .map(((i, line)) => {
+        if i not in labelled { return line }
 
-      let last = line.last()
-      if last.func() != raw { return line }
-      if last.lang != "typc" { return line }
-      if last.text.match(regex("^<.+>$")) == none { return line }
+        // Remove trailing spacing (before label).
+        if line.at(-2, default: none) == [ ] { line.remove(-2) }
 
-      // Remove trailing spacing (before label).
-      if line.at(-2, default: none) == [ ] { line.remove(-2) }
+        // Append sub-numbering only if there are multiple numbered lines.
+        let nums = main-number + if numbered.len() > 1 {
+          (numbered.position(n => n == i) + 1,)
+        }
 
-      // Append sub-numbering only if there are multiple numbered lines.
-      let nums = main-number + if numbered.len() > 1 {
-        (numbered.position(n => n == i) + 1,)
-      }
+        // We use a figure with kind "equation" to make the sub-equation
+        // referenceable with the correct supplement. The numbering is stored
+        // in the figure body as metadata, as a counter would only show a
+        // single number.
+        line.at(-1) = [#figure(
+          metadata(nums),
+          kind: math.equation,
+          numbering: numbering,
+          supplement: supplement
+        )#label(line.last().text.slice(1, -1))]
 
-      // We use a figure with kind "equation" to make the sub-equation
-      // referenceable with the correct supplement. The numbering is stored
-      // in the figure body as metadata, as a counter would only show a
-      // single number.
-      line.at(-1) = [#figure(
-        metadata(nums),
-        kind: math.equation,
-        numbering: numbering,
-        supplement: supplement
-      )#label(last.text.slice(1, -1))]
-
-      return line
-    })
+        return line
+      })
+  )
 }
 
 // Splitting an equation into multiple lines breaks the inbuilt alignment
@@ -285,29 +290,13 @@
       if it.number-align.x == start { right } else { left }
     }
 
-    let lines = replace-labels(
+    let (numbered, lines) = replace-labels(
       to-lines(it),
       number-mode,
       it.numbering,
       it.supplement,
       it.has("label")
     )
-
-    // Indices of numbered lines in this equation.
-    let numbered = if number-mode == "line" or it.has("label") {
-      range(lines.len())
-    } else {
-      // Find lines that have a replaced label.
-      lines.enumerate()
-        .filter(((i, line)) => {
-          if line.len() == 0 { return false }
-          if line.last().func() != figure { return false }
-          if line.last().body == none { return false }
-          if line.last().body.func() != metadata { return false }
-          return true
-        })
-        .map(((i, _)) => i)
-    }
 
     // Short-circuit for single-line equations.
     if lines.len() == 1 {

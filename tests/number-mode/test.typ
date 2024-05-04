@@ -21,8 +21,11 @@ $ k + l $
 $ m + n \
   o + p $ <label>
 
-$ q + r \
-  s + t $ <equate:revoke>
+$ q + r #<label> \
+  s + t $ <label>
+
+$ u + v \
+  w + x $ <equate:revoke>
 
 #show: equate.with(sub-numbering: true, number-mode: "label")
 
@@ -42,5 +45,8 @@ $ k + l $
 $ m + n \
   o + p $ <label>
 
-$ q + r \
-  s + t $ <equate:revoke>
+$ q + r #<label> \
+  s + t $ <label>
+
+$ u + v \
+  w + x $ <equate:revoke>
