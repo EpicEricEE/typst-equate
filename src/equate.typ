@@ -268,6 +268,13 @@
       fill: yellow
     ) if debug
 
+    // Prevent show rules on figures from messing with replaced labels.
+    show figure.where(kind: math.equation): it => {
+      if it.body == none { return it }
+      if it.body.func() != metadata { return it }
+      none
+    }
+
     // Main equation number.
     let main-number = counter(math.equation).get().first()
 
