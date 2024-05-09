@@ -7,6 +7,51 @@
 // Sub-numbering state.
 #let state = state("equate/sub-numbering", false)
 
+// Show rule necessary for referencing equation lines, as the number is not
+// stored in a counter, but as metadata in a figure.
+#let equate-ref(it) = {
+  if it.element == none { return it }
+  if it.element.func() != figure { return it }
+  if it.element.kind != math.equation { return it }
+  if it.element.body == none { return it }
+  if it.element.body.func() != metadata { return it }
+
+  // Display correct number, depending on whether sub-numbering was enabled.
+  let nums = if state.at(it.element.location()) {
+    it.element.body.value
+  } else {
+    // (3, 1): 3 + 1 - 1 = 3
+    // (3, 2): 3 + 2 - 1 = 4
+    (it.element.body.value.first() + it.element.body.value.slice(1).sum(default: 1) - 1,)
+  }
+
+  assert(
+    it.element.numbering != none,
+    message: "cannot reference equation without numbering."
+  )
+
+  let num = numbering(
+    if type(it.element.numbering) == str {
+      // Trim numbering pattern of prefix and suffix characters.
+      let counting-symbols = ("1", "a", "A", "i", "I", "一", "壹", "あ", "い", "ア", "イ", "א", "가", "ㄱ", "*")
+      let prefix-end = it.element.numbering.codepoints().position(c => c in counting-symbols)
+      let suffix-start = it.element.numbering.codepoints().rev().position(c => c in counting-symbols)
+      it.element.numbering.slice(prefix-end, if suffix-start == 0 { none } else { -suffix-start })
+    } else {
+      it.element.numbering
+    },
+    ..nums
+  )
+
+  let supplement = if it.supplement == auto {
+    it.element.supplement
+  } else {
+    it.supplement
+  }
+
+  link(it.element.location(), if supplement not in ([], none) [#supplement~#num] else [#num])
+}
+
 // Extract lines and trim spaces.
 #let to-lines(equation) = {
   let lines = if equation.body.has("children") {
@@ -255,6 +300,17 @@
     message: "expected \"line\" or \"label\" for number-mode, found " + repr(number-mode)
   )
 
+  // This function was applied to a reference or label, so apply the reference
+  // rule instead of the equation rule.
+  if type(body) == label {
+    return {
+      show ref: equate-ref
+      ref(body)
+    }
+  } else if body.func() == ref {
+    return equate-ref(body)
+  }
+
   show math.equation.where(block: true): it => {
     // Allow a way to make default equations.
     if it.has("label") and it.label == <equate:revoke> {
@@ -390,49 +446,8 @@
     }
   }
 
-  // Add support for sub-numbering in references.
-  show ref: it => {
-    if it.element == none { return it }
-    if it.element.func() != figure { return it }
-    if it.element.kind != math.equation { return it }
-    if it.element.body == none { return it }
-    if it.element.body.func() != metadata { return it }
-
-    // Display correct number, depending on whether sub-numbering was enabled.
-    let nums = if state.at(it.element.location()) {
-      it.element.body.value
-    } else {
-      // (3, 1): 3 + 1 - 1 = 3
-      // (3, 2): 3 + 2 - 1 = 4
-      (it.element.body.value.first() + it.element.body.value.slice(1).sum(default: 1) - 1,)
-    }
-
-    assert(
-      it.element.numbering != none,
-      message: "cannot reference equation without numbering."
-    )
-
-    let num = numbering(
-      if type(it.element.numbering) == str {
-        // Trim numbering pattern of prefix and suffix characters.
-        let counting-symbols = ("1", "a", "A", "i", "I", "一", "壹", "あ", "い", "ア", "イ", "א", "가", "ㄱ", "*")
-        let prefix-end = it.element.numbering.codepoints().position(c => c in counting-symbols)
-        let suffix-start = it.element.numbering.codepoints().rev().position(c => c in counting-symbols)
-        it.element.numbering.slice(prefix-end, if suffix-start == 0 { none } else { -suffix-start })
-      } else {
-        it.element.numbering
-      },
-      ..nums
-    )
-
-    let supplement = if it.supplement == auto {
-      it.element.supplement
-    } else {
-      it.supplement
-    }
-
-    link(it.element.location(), if supplement not in ([], none) [#supplement~#num] else [#num])
-  }
+  // Add show rule for referencing equation lines.
+  show ref: equate-ref
 
   body
 }

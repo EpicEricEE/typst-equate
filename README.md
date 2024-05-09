@@ -1,7 +1,7 @@
 # equate
 A package for improved layout of equations and mathematical expressions.
 
-When applied, this package will split up multi-line block equations into multiple elements, so that each line can be assigned a separate number. By default, the equation counter is incremented for each line, but this behavior can be changed by setting the `sub-numbering` argument to `true`. In this case, the equation counter will only be incremented once for the entire block, and each line will be assigned a sub-number like `1a`, `2.1`, or similar, depending on the set equation numbering. You can also set the `number-mode` argument to `"label"` to only number labelled lines. If the label is applied to the full equation, all lines will be numbered.
+When applied, this package will split up multi-line block equations into multiple elements, so that each line can be assigned a separate number. By default, the equation counter is incremented for each line, but this behavior can be changed by setting the `sub-numbering` argument to `true`. In this case, the equation counter will only be incremented once for the entire block, and each line will be assigned a sub-number like `1a`, `2.1`, or similar, depending on the set equation numbering. You can also set the `number-mode` argument to `"label"` to only number labelled lines. If a label is only applied to the full equation, all lines will be numbered.
 
 This splitting also makes it possible to spread equations over page boundaries while keeping alignment in place, which can be useful for long derivations or proofs. Additionally, the alignment of the equation number is improved, so that it always matches the baseline of the equation.
 
@@ -38,3 +38,27 @@ product of two vectors.
 
 ![Result of example code (page 1).](assets/example-1.svg)  
 ![Result of example code (page 2).](assets/example-2.svg)
+
+### Local Usage
+If you only want to use the package features on selected equations, you can also apply the `equate` function directly to the equation. This will override the default behavior for the current equation only. Note, that this will require you to use the `equate` function as a show rule for references, as shown in the following example:
+
+```typ
+#import "@preview/equate:0.1.0": equate
+
+// Allow references to a line of the equation.
+#show ref: equate
+
+#set math.equation(numbering: "(1.1)", supplement: "Eq.")
+
+#equate($
+  E &= m c^2 #<short> \
+    &= sqrt(p^2 c^2 + m^2 c^4) #<long>
+$)
+
+While @short is the famous equation by Einstein, @long is a
+more general form of the energy-momentum relation.
+```
+
+![Result of example code.](assets/example-local.svg)
+
+As an alternative to the show rule, it is also possible to manually wrap each reference in an `equate` function, though this is less convenient and more prone to mistakes.
