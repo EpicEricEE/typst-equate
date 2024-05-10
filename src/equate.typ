@@ -297,9 +297,22 @@
   debug: false,
   body
 ) = {
+  // Validate parameters.
   assert(
-    number-mode in ("line", "label"),
+    breakable == auto or breakable == true or breakable == false,
+    message: "expected boolean or auto for breakable, found " + repr(breakable)
+  )
+  assert(
+    sub-numbering == true or sub-numbering == false,
+    message: "expected boolean for sub-numbering, found " + repr(sub-numbering)
+  )
+  assert(
+    number-mode == "line" or number-mode == "label",
     message: "expected \"line\" or \"label\" for number-mode, found " + repr(number-mode)
+  )
+  assert(
+    debug == true or debug == false,
+    message: "expected boolean for debug, found " + repr(debug)
   )
 
   // This function was applied to a reference or label, so apply the reference
