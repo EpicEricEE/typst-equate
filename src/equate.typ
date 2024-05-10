@@ -283,6 +283,7 @@
 // and displayed at every line, optionally with sub-numbering.
 //
 // Parameters:
+// - breakable: Whether to allow page breaks within the equation.
 // - sub-numbering: Whether to add sub-numbering to the equation.
 // - number-mode: Whether to number all lines or only lines containing a label.
 //                Must be either "line" or "label".
@@ -290,6 +291,7 @@
 //
 // Returns: The body with the applied show rules.
 #let equate(
+  breakable: auto,
   sub-numbering: false,
   number-mode: "line",
   debug: false,
@@ -333,6 +335,9 @@
 
     // Main equation number.
     let main-number = counter(math.equation).get().first()
+
+    // Resolve breakable parameter.
+    let breakable = if breakable == auto { block.breakable } else { breakable }
 
     // Resolve text direction.
     let text-dir = if text.dir == auto {
@@ -405,7 +410,7 @@
     state.update(_ => sub-numbering)
 
     // Layout equation as grid to allow page breaks.
-    grid(
+    block(breakable: breakable, grid(
       columns: 1,
       row-gutter: par.leading,
       ..realign(lines).enumerate().map(((i, line)) => {
@@ -428,7 +433,7 @@
           number-width: max-number-width
         )
       })
-    )
+    ))
 
     // Revert equation counter step(s).
     if it.numbering == none {

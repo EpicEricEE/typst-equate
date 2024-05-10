@@ -16,3 +16,27 @@ $ a &= b \
     &= d \
     &= f \
   g &= h $
+
+// Test breakable parameter.
+
+#equate(breakable: false, $
+  a + b \
+  c - d \
+  e + f \
+  g = h
+$)
+
+#show math.equation: set block(breakable: false)
+
+$ a + b \
+  c - d \
+  e + f \
+  g = h $
+
+
+#equate(breakable: true, $
+  a + b \
+  c - d \
+  e + f \
+  g = h
+$)
