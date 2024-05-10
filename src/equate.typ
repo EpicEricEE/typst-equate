@@ -323,7 +323,10 @@
       ref(body)
     }
   } else if body.func() == ref {
-    return equate-ref(body)
+    return {
+      show ref: equate-ref
+      body
+    }
   }
 
   show math.equation.where(block: true): it => {
