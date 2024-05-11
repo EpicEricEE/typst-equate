@@ -299,19 +299,19 @@
 ) = {
   // Validate parameters.
   assert(
-    breakable == auto or breakable == true or breakable == false,
+    breakable == auto or type(breakable) == bool,
     message: "expected boolean or auto for breakable, found " + repr(breakable)
   )
   assert(
-    sub-numbering == true or sub-numbering == false,
+    type(sub-numbering) == bool,
     message: "expected boolean for sub-numbering, found " + repr(sub-numbering)
   )
   assert(
-    number-mode == "line" or number-mode == "label",
+    number-mode in ("line", "label"),
     message: "expected \"line\" or \"label\" for number-mode, found " + repr(number-mode)
   )
   assert(
-    debug == true or debug == false,
+    type(debug) == bool,
     message: "expected boolean for debug, found " + repr(debug)
   )
 
