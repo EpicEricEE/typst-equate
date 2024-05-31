@@ -1,11 +1,11 @@
 #import "/src/lib.typ": equate
 
-#set page(width: 6cm, height: auto, margin: 1em)
+#set page(width: 6cm, height: 2cm, margin: 1em)
 #show: equate
 
 // Test equations breaking across page boundaries.
 
-#set page(height: 2cm)
+#show math.equation: set block(breakable: true)
 
 $ a + b \
   c - d \

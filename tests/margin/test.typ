@@ -1,7 +1,7 @@
 #import "/src/lib.typ": equate
 
 #set page(width: 6cm, height: auto, margin: 1em)
-#show: equate
+#show: equate.with(breakable: true)
 
 // Test number positioning with different page margins.
 
