@@ -329,6 +329,7 @@
     }
   }
 
+  show math.equation.where(block: true): set block(breakable: breakable) if type(breakable) == bool
   show math.equation.where(block: true): it => {
     // Allow a way to make default equations.
     if it.has("label") and it.label == <equate:revoke> {
@@ -351,9 +352,6 @@
 
     // Main equation number.
     let main-number = counter(math.equation).get().first()
-
-    // Resolve breakable parameter.
-    let breakable = if breakable == auto { block.breakable } else { breakable }
 
     // Resolve text direction.
     let text-dir = if text.dir == auto {
@@ -426,7 +424,7 @@
     state.update(_ => sub-numbering)
 
     // Layout equation as grid to allow page breaks.
-    block(breakable: breakable, grid(
+    block(grid(
       columns: 1,
       row-gutter: par.leading,
       ..realign(lines).enumerate().map(((i, line)) => {
