@@ -17,6 +17,9 @@ $ a + b &= c + d &&= e + f \
 $ a + b &= c \
       d &    &= e + f $
 
+$ "text" & "text" \
+         & "text" $
+
 // Cases below taken from Typst test suite.
 
 $ "a" &= c \

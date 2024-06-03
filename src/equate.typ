@@ -86,7 +86,25 @@
   let equation(body) = math.equation(
     block: true,
     numbering: _ => none,
-    metadata("equate/internal") + body
+    {
+      metadata("equate/internal")
+
+      if body in ([], [ ], none) {
+        none
+      } else if body.has("children") {
+        // Trim spaces at begin and end of body.
+        let body = body.children
+        if body.at(0, default: none) == [ ] {
+          body = body.slice(1)
+        }
+        if body.at(-1, default: none) == [ ] {
+          body = body.slice(0, -1)
+        }
+        body.join()
+      } else {
+        body
+      }
+    }
   )
 
   // Short circuit if no number has to be added.
@@ -204,7 +222,25 @@
   let equation(body) = math.equation(
     block: true,
     numbering: none,
-    metadata("equate/internal") + body
+    {
+      metadata("equate/internal")
+
+      if body in ([], [ ], none) {
+        none
+      } else if body.has("children") {
+        // Trim spaces at begin and end of body.
+        let body = body.children
+        if body.at(0, default: none) == [ ] {
+          body = body.slice(1)
+        }
+        if body.at(-1, default: none) == [ ] {
+          body = body.slice(0, -1)
+        }
+        body.join()
+      } else {
+        body
+      }
+    }
   )
 
   // Short-circuit if no alignment points.
@@ -213,24 +249,32 @@
   }
 
   // Store widths of each part between alignment points.
-  let part-widths = lines.map(line => line
-      .split(align-point())
-      .map(part => measure(equation(part.join())).width))
+  let part-widths = lines.map(line => {
+    line.split(align-point())
+      .map(part => measure(equation(part.join())).width)
+  })
 
   // Get maximum width of each part.
   let part-widths = for i in range(calc.max(..part-widths.map(points => points.len()))) {
     (calc.max(..part-widths.map(line => line.at(i, default: 0pt))), )
   }
 
+  // Get maximum width of each slice of parts.
+  let max-slice-widths = array.zip(..lines.map(line => range(part-widths.len()).map(i => {
+    let parts = line.split(align-point()).map(array.join)
+    if i >= parts.len() {
+      0pt
+    } else {
+      let slice = parts.slice(0, i + 1).join()
+      measure(equation(slice)).width
+    }
+  }))).map(widths => calc.max(..widths))
+
   // Add spacers for each part, so that the part widths are the same for all lines.
   let lines = lines.map(line => {
     line.split(align-point())
       .enumerate()
       .map(((i, part)) => {
-        // Trim spaces at begin and end of part.
-        if part.at(0, default: none) == [ ] { part = part.slice(1) }
-        if part.at(-1, default: none) == [ ] { part = part.slice(0, -1) }
-
         // Add spacer to make part the correct width.
         let width-diff = part-widths.at(i) - measure(equation(part.join())).width
         let spacing = if width-diff > 0pt { h(0pt) + box(fill: yellow, width: width-diff) + h(0pt) }
@@ -244,17 +288,7 @@
       .intersperse(align-point())
   })
 
-  // Ensure correct spacing with all previous parts combined.
-  let max-slice-widths = array.zip(..lines.map(line => range(part-widths.len()).map(i => {
-    let parts = line.split(align-point()).map(array.join)
-    if i >= parts.len() {
-      0pt
-    } else {
-      let slice = parts.slice(0, i + 1).join()
-      measure(equation(slice)).width
-    }
-  }))).map(widths => calc.max(..widths))
-
+  // Add spacers between parts to ensure correct spacing with combined parts.
   lines = for line in lines {
     let parts = line.split(align-point()).map(array.join)
     for i in range(max-slice-widths.len()) {
@@ -264,7 +298,7 @@
       let slice = parts.slice(0, i + 1).join()
       let slice-width = measure(equation(slice)).width
       if slice-width < max-slice-widths.at(i) {
-        parts.at(i) = box(fill: green, width: max-slice-widths.at(i) - slice-width) + h(0pt) + parts.at(i)
+        parts.at(i) = h(0pt) + box(fill: green, width: max-slice-widths.at(i) - slice-width) + h(0pt) + parts.at(i)
       } else if slice-width > max-slice-widths.at(i) {
         max-slice-widths.at(i) = slice-width
       }
