@@ -83,16 +83,22 @@
   number-width: auto,
   line
 ) = context {
+  let equation(body) = math.equation(
+    block: true,
+    numbering: _ => none,
+    metadata("equate/internal") + body
+  )
+
   // Short circuit if no number has to be added.
   if number == none {
-    return math.equation(block: true, numbering: _ => none, line.join())
+    return equation(line.join())
   }
 
   // Short circuit if number is a counter update.
   if type(number) == content and number.func() == counter-update {
     return {
       number
-      math.equation(block: true, numbering: _ => none, line.join())
+      equation(line.join())
     }
   }
 
@@ -123,7 +129,7 @@
                   else { "right" }
 
     let pad-arg = ((pad-key): number-width)
-    pad(..pad-arg, math.equation(numbering: _ => none, block: true, body))
+    pad(..pad-arg, equation(body))
   })
 }
 
@@ -195,9 +201,13 @@
 // with alignment points, so it is emulated here by adding spacers manually.
 #let realign(lines) = {
   // Utility shorthand for unnumbered block equation.
-  let equation = math.equation.with(block: true, numbering: none)
+  let equation(body) = math.equation(
+    block: true,
+    numbering: none,
+    metadata("equate/internal") + body
+  )
 
-  // Short-circuit if not alignment points.
+  // Short-circuit if no alignment points.
   if lines.all(line => align-point() not in line) {
     return lines
   }
@@ -214,27 +224,22 @@
 
   // Add spacers for each part, so that the part widths are the same for all lines.
   let lines = lines.map(line => {
-    let parts = line.split(align-point())
-
-    let spaced(i, spacing) = {
-      let spacing = if spacing > 0pt { box(width: spacing) }
-      if calc.even(i) {
-        // Right align.
-        spacing + parts.at(i).join()
-      } else {
-        // Left align.
-        parts.at(i).join() + spacing
-      }
-    }
-
-    parts.enumerate()
+    line.split(align-point())
+      .enumerate()
       .map(((i, part)) => {
-        // Add spacer to make part the correct width.
-        let width = part-widths.at(i) - measure(equation(part.join())).width
-        let elem = equation(spaced(i, width))
+        // Trim spaces at begin and end of part.
+        if part.at(0, default: none) == [ ] { part = part.slice(1) }
+        if part.at(-1, default: none) == [ ] { part = part.slice(0, -1) }
 
-        // Adjust for math class spacing between the spacer and the actual equation.
-        equation(spaced(i, width + part-widths.at(i) - measure(elem).width))
+        // Add spacer to make part the correct width.
+        let width-diff = part-widths.at(i) - measure(equation(part.join())).width
+        let spacing = if width-diff > 0pt { h(0pt) + box(fill: yellow, width: width-diff) + h(0pt) }
+
+        if calc.even(i) {
+          spacing + part.join() // Right align.
+        } else {
+          part.join() + spacing // Left align.
+        }
       })
       .intersperse(align-point())
   })
@@ -250,7 +255,7 @@
     }
   }))).map(widths => calc.max(..widths))
 
-  lines = lines.map(line => {
+  lines = for line in lines {
     let parts = line.split(align-point()).map(array.join)
     for i in range(max-slice-widths.len()) {
       if i >= parts.len() {
@@ -259,18 +264,20 @@
       let slice = parts.slice(0, i + 1).join()
       let slice-width = measure(equation(slice)).width
       if slice-width < max-slice-widths.at(i) {
-        parts.at(i) = box(width: max-slice-widths.at(i) - slice-width) + parts.at(i)
+        parts.at(i) = box(fill: green, width: max-slice-widths.at(i) - slice-width) + h(0pt) + parts.at(i)
+      } else if slice-width > max-slice-widths.at(i) {
+        max-slice-widths.at(i) = slice-width
       }
     }
-    parts
-  })
+    (parts,)
+  }
 
   // Append remaining spacers at the end for lines that have less align points.
   let line-widths = lines.map(line => measure(equation(line.join())).width)
   let max-line-width = calc.max(..line-widths)
   lines = lines.zip(line-widths).map(((line, line-width)) => {
     if line-width < max-line-width {
-      line.push(box(width: max-line-width - line-width))
+      line.push(h(0pt) + box(fill: red, width: max-line-width - line-width))
     }
     line
   })
@@ -331,16 +338,29 @@
 
   show math.equation.where(block: true): set block(breakable: breakable) if type(breakable) == bool
   show math.equation.where(block: true): it => {
+    // Don't apply this rule to internal equations used for measuring.
+    let first = if it.body.has("children") {
+      it.body.children.at(0, default: none)
+    } else {
+      it.body
+    }
+
+    if first != none and first.func() == metadata and first.value == "equate/internal" {
+      return it
+    }
+
     // Allow a way to make default equations.
     if it.has("label") and it.label == <equate:revoke> {
       return it
     }
 
     // Make spacers visible in debug mode.
+    show box.where(body: none): it => {
+      if debug { it } else { hide(it) }
+    }
     show box.where(body: none): set box(
-      height: 0.5em,
+      height: 0.4em,
       stroke: 0.4pt,
-      fill: yellow
     ) if debug
 
     // Prevent show rules on figures from messing with replaced labels.
