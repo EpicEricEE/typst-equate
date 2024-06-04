@@ -15,7 +15,7 @@
   )),
 )
 
-#show: equate.with(sub-numbering: true)
+#show: equate.with(breakable: true, sub-numbering: true)
 #set math.equation(numbering: "(1.1)")
 
 The dot product of two vectors $arrow(a)$ and $arrow(b)$ can be

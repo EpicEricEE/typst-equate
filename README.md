@@ -21,7 +21,7 @@ To reference a specific line of an equation, include the label at the end of the
 ```typ
 #import "@preview/equate:0.1.0": equate
 
-#show: equate.with(sub-numbering: true)
+#show: equate.with(breakable: true, sub-numbering: true)
 #set math.equation(numbering: "(1.1)")
 
 The dot product of two vectors $arrow(a)$ and $arrow(b)$ can
