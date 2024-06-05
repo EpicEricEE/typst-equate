@@ -81,6 +81,7 @@
   number: none,
   number-align: none,
   number-width: auto,
+  text-dir: auto,
   line
 ) = context {
   let equation(body) = [
@@ -114,24 +115,49 @@
     number-width
   }
 
-  let equation-align = align.alignment.x
+  // Resolve equation alignment in x-direction.
+  let equation-align = if align.alignment.x in (left, center, right) {
+    align.alignment.x
+  } else if text-dir == ltr {
+    if align.alignment.x == start { left } else { right }
+  } else if text-dir == rtl {
+    if align.alignment.x == start { right } else { left }
+  }
+
+  // Add numbers to the equation body, so that they are aligned at their
+  // respective baselines. If the equation is centered, the number is put
+  // on both sides of the equation to keep the center alignment.
+
+  let num = box(width: number-width, align(number-align, number))
+  let line-width = measure(equation(line.join())).width
+  let gap = 0.5em
 
   layout(bounds => {
-    // Add numbers to the equation body, so that they are aligned
-    // at their respective baselines. They are wrapped in a zero-width box
-    // to not mess with the center alignment.
-    let body = line.join() + box(width: 0pt, context move(
-      dx: x-start - here().position().x + if number-align.x == right { bounds.width },
-      align(number-align, box(width: number-width, number))
-    ))
+    let space = if equation-align == center {
+      bounds.width - line-width - 2 * number-width
+    } else {
+      bounds.width - line-width - number-width
+    }
 
-    // Make numbering take up space.
-    let pad-key = if equation-align == center { "x" }
-                  else if number-align == left { "left" }
-                  else { "right" }
+    let body = if number-align.x == left {
+      if equation-align == center {
+        h(-gap) + num + h(space / 2 + gap) + line.join() + h(space / 2) + hide(num)
+      } else if equation-align == right {
+        num + h(space + 2 * gap) + line.join()
+      } else {
+        h(-gap) + num + h(gap) + line.join() + h(space + gap)
+      }
+    } else {
+      if equation-align == center {
+        hide(num) + h(space / 2) + line.join() + h(space / 2 + gap) + num + h(-gap)
+      } else if equation-align == right {
+        h(space + gap) + line.join() + h(gap) + num + h(-gap)
+      } else {
+        line.join() + h(space + 2 * gap) + num
+      }
+    }
 
-    let pad-arg = ((pad-key): number-width)
-    pad(..pad-arg, equation(body))
+    equation(body)
   })
 }
 
@@ -419,7 +445,8 @@
         layout-line(
           lines.first(),
           number: number,
-          number-align: number-align
+          number-align: number-align,
+          text-dir: text-dir
         )
 
         // Step back counter as we introducted an additional equation
@@ -464,7 +491,8 @@
           line,
           number: number,
           number-align: number-align,
-          number-width: max-number-width
+          number-width: max-number-width,
+          text-dir: text-dir
         )
       })
     ))
