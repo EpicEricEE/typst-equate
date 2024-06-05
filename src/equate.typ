@@ -83,29 +83,13 @@
   number-width: auto,
   line
 ) = context {
-  let equation(body) = math.equation(
-    block: true,
-    numbering: _ => none,
-    {
-      metadata("equate/internal")
-
-      if body in ([], [ ], none) {
-        none
-      } else if body.has("children") {
-        // Trim spaces at begin and end of body.
-        let body = body.children
-        if body.at(0, default: none) == [ ] {
-          body = body.slice(1)
-        }
-        if body.at(-1, default: none) == [ ] {
-          body = body.slice(0, -1)
-        }
-        body.join()
-      } else {
-        body
-      }
-    }
-  )
+  let equation(body) = [
+    #math.equation(
+      block: true,
+      numbering: _ => none,
+      body
+    ) <equate:revoke>
+  ]
 
   // Short circuit if no number has to be added.
   if number == none {
@@ -219,29 +203,13 @@
 // with alignment points, so it is emulated here by adding spacers manually.
 #let realign(lines) = {
   // Utility shorthand for unnumbered block equation.
-  let equation(body) = math.equation(
-    block: true,
-    numbering: none,
-    {
-      metadata("equate/internal")
-
-      if body in ([], [ ], none) {
-        none
-      } else if body.has("children") {
-        // Trim spaces at begin and end of body.
-        let body = body.children
-        if body.at(0, default: none) == [ ] {
-          body = body.slice(1)
-        }
-        if body.at(-1, default: none) == [ ] {
-          body = body.slice(0, -1)
-        }
-        body.join()
-      } else {
-        body
-      }
-    }
-  )
+  let equation(body) = [
+    #math.equation(
+      block: true,
+      numbering: none,
+      body
+    ) <equate:revoke>
+  ]
 
   // Short-circuit if no alignment points.
   if lines.all(line => align-point() not in line) {
@@ -288,6 +256,17 @@
       .intersperse(align-point())
   })
 
+  // Update maximum slice widths to include spacers.
+  let max-slice-widths = array.zip(..lines.map(line => range(part-widths.len()).map(i => {
+    let parts = line.split(align-point()).map(array.join)
+    if i >= parts.len() {
+      0pt
+    } else {
+      let slice = parts.slice(0, i + 1).join()
+      calc.max(max-slice-widths.at(i), measure(equation(slice)).width)
+    }
+  }))).map(widths => calc.max(..widths))
+
   // Add spacers between parts to ensure correct spacing with combined parts.
   lines = for line in lines {
     let parts = line.split(align-point()).map(array.join)
@@ -295,12 +274,10 @@
       if i >= parts.len() {
         break
       }
-      let slice = parts.slice(0, i + 1).join()
+      let slice = parts.slice(0, i).join() + h(0pt) + parts.at(i)
       let slice-width = measure(equation(slice)).width
       if slice-width < max-slice-widths.at(i) {
         parts.at(i) = h(0pt) + box(fill: green, width: max-slice-widths.at(i) - slice-width) + h(0pt) + parts.at(i)
-      } else if slice-width > max-slice-widths.at(i) {
-        max-slice-widths.at(i) = slice-width
       }
     }
     (parts,)
@@ -372,17 +349,6 @@
 
   show math.equation.where(block: true): set block(breakable: breakable) if type(breakable) == bool
   show math.equation.where(block: true): it => {
-    // Don't apply this rule to internal equations used for measuring.
-    let first = if it.body.has("children") {
-      it.body.children.at(0, default: none)
-    } else {
-      it.body
-    }
-
-    if first != none and first.func() == metadata and first.value == "equate/internal" {
-      return it
-    }
-
     // Allow a way to make default equations.
     if it.has("label") and it.label == <equate:revoke> {
       return it
