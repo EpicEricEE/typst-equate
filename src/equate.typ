@@ -1,6 +1,9 @@
 // Element function for alignment points.
 #let align-point = $&$.body.func()
 
+// Element function for sequences.
+#let sequence = $a b$.body.func()
+
 // Element function for a counter update.
 #let counter-update = counter(math.equation).update(1).func()
 
@@ -54,7 +57,7 @@
 
 // Extract lines and trim spaces.
 #let to-lines(equation) = {
-  let lines = if equation.body.has("children") {
+  let lines = if equation.body.func() == sequence {
     equation.body.children.split(linebreak())
   } else {
     ((equation.body,),)
