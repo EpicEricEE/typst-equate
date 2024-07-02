@@ -190,12 +190,24 @@
     })
     .map(((i, _)) => i)
 
+  // Indices of lines that are marked not to be numbered.
+  let revoked = lines
+    .enumerate()
+    .filter(((i, line)) => {
+      if i not in labelled { return false }
+      return line.last().text == "<equate:revoke>"
+    })
+    .map(((i, _)) => i)
+
+  // The "revoke" label shall not count as a labelled line.
+  labelled = labelled.filter(i => i not in revoked)
+
   // Indices of numbered lines in this equation.
   let numbered = if number-mode == "line" {
-    range(lines.len())
+    range(lines.len()).filter(i => i not in revoked)
   } else if labelled.len() == 0 and has-label {
     // Only outer label, so number all lines.
-    range(lines.len())
+    range(lines.len()).filter(i => i not in revoked)
   } else {
     labelled
   }
@@ -204,6 +216,13 @@
     numbered,
     lines.enumerate()
       .map(((i, line)) => {
+        if i in revoked {
+          // Remove "revoke" label and space and return line.
+          line.remove(-1)
+          if line.at(-2, default: none) == [ ] { line.remove(-2) }
+          return line
+        }
+
         if i not in labelled { return line }
 
         // Remove trailing spacing (before label).

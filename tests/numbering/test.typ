@@ -22,6 +22,10 @@ $ i + j \
 $ m + n \
   o + p $ <equate:revoke>
 
+$ q + r \
+  s + t #<equate:revoke> \
+  u + v $
+
 #show: equate.with(sub-numbering: true)
 
 #set math.equation(numbering: "(1.1)")
@@ -40,3 +44,7 @@ $ i + j \
 
 $ m + n \
   o + p $ <equate:revoke>
+
+$ q + r \
+  s + t #<equate:revoke> \
+  u + v $

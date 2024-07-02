@@ -27,6 +27,10 @@ $ q + r #<label> \
 $ u + v \
   w + x $ <equate:revoke>
 
+$ y + z \
+  1 + 2 #<equate:revoke> \
+  3 + 4 $ <label>
+
 #show: equate.with(sub-numbering: true, number-mode: "label")
 
 #set math.equation(numbering: "(1.1)")
@@ -50,3 +54,7 @@ $ q + r #<label> \
 
 $ u + v \
   w + x $ <equate:revoke>
+
+$ y + z \
+  1 + 2 #<equate:revoke> \
+  3 + 4 $ <label>
