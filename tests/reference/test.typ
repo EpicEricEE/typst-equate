@@ -30,3 +30,13 @@ $ a + b \
 @outer, @inner, @no-sub, @labelled
 
 See @inner[] and @outer[eq.]
+
+#set ref(supplement: it => {
+  if it.label == <inner> {
+    "Subequation"
+  } else {
+    "Equation"
+  }
+})
+
+@inner, @outer

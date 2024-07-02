@@ -48,6 +48,8 @@
 
   let supplement = if it.supplement == auto {
     it.element.supplement
+  } else if type(it.supplement) == function {
+    (it.supplement)(it.element)
   } else {
     it.supplement
   }
