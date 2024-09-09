@@ -5,7 +5,7 @@ When applied, this package will split up multi-line block equations into multipl
 
 This splitting also makes it possible to spread equations over page boundaries while keeping alignment in place, which can be useful for long derivations or proofs. This can be configured by the `breakable` parameter of the `equate` function, or by setting the `breakable` parameter of `block` for equations via a show-set rule. Additionally, the alignment of the equation number is improved, so that it always matches the baseline of the equation.
 
-If you want to create a "standard" equation with a single equation number centered across all lines, you can attach the `<equate:revoke>` label to the equation. This will disable the effect of this package for the current equation.
+If you want to create a "standard" equation with a single equation number centered across all lines, you can attach the `<equate:revoke>` label to the equation. This will disable the effect of this package for the current equation. This label can also be used in single lines of an equation to disable numbering for that line only.
 
 ## Usage
 The package comes with a single `equate` function that is supposed to be used as a template. It takes two optional arguments for customization:
@@ -19,7 +19,7 @@ The package comes with a single `equate` function that is supposed to be used as
 To reference a specific line of an equation, include the label at the end of the line, like in the following example:
 
 ```typ
-#import "@preview/equate:0.2.0": equate
+#import "@preview/equate:0.2.1": equate
 
 #show: equate.with(breakable: true, sub-numbering: true)
 #set math.equation(numbering: "(1.1)")
@@ -44,7 +44,7 @@ product of two vectors.
 If you only want to use the package features on selected equations, you can also apply the `equate` function directly to the equation. This will override the default behavior for the current equation only. Note, that this will require you to use the `equate` function as a show rule for references, as shown in the following example:
 
 ```typ
-#import "@preview/equate:0.2.0": equate
+#import "@preview/equate:0.2.1": equate
 
 // Allow references to a line of the equation.
 #show ref: equate
