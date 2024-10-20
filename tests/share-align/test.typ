@@ -3,6 +3,8 @@
 #set page(width: 6cm, height: auto, margin: 1em)
 #show: equate
 
+// Test correct behavior of shared alignment blocks.
+
 #share-align[
   $ a + b &= c $
   leads to

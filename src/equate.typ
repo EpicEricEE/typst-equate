@@ -13,6 +13,9 @@
 // State for tracking whether we're in a shared alignment block.
 #let share-align-state = state("equate/share-align", false)
 
+// State for tracking whether we're in a nested equation.
+#let nested-state = state("equate/nested-depth", 0)
+
 // Show rule necessary for referencing equation lines, as the number is not
 // stored in a counter, but as metadata in a figure.
 #let equate-ref(it) = {
@@ -451,6 +454,11 @@
 
   show math.equation.where(block: true): set block(breakable: breakable) if type(breakable) == bool
   show math.equation.where(block: true): it => {
+    // Don't apply show rule in a nested equations.
+    if nested-state.get() > 0 {
+      return it
+    }
+
     // Allow a way to make default equations.
     if it.has("label") and it.label == <equate:revoke> {
       return it
@@ -587,6 +595,19 @@
         n - if sub-numbering and numbered.len() > 1 { numbered.len() } else { 1 }
       })
     }
+  }
+
+  // Apply this show rule first to update nested state.
+  // This works because the context provided by the other show rule does not
+  // yet include the updated state, so it can be retrieved correctly.
+  show math.equation.where(block: true): it => {
+    // Turn off numbering for nested equations, as it's usually unwanted.
+    // Workaround for https://github.com/typst/typst/issues/5263.
+    set math.equation(numbering: none)
+
+    nested-state.update(n => n + 1)
+    it
+    nested-state.update(n => n - 1)
   }
 
   // Add show rule for referencing equation lines.
