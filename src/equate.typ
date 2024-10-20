@@ -7,11 +7,14 @@
 // Element function for a counter update.
 #let counter-update = counter(math.equation).update(1).func()
 
+// State for tracking whether equate is enabled.
+#let equate-state = state("equate/enabled", 0)
+
 // State for tracking the sub-numbering property.
 #let sub-numbering-state = state("equate/sub-numbering", false)
 
 // State for tracking whether we're in a shared alignment block.
-#let share-align-state = state("equate/share-align", false)
+#let share-align-state = state("equate/share-align", 0)
 
 // State for tracking whether we're in a nested equation.
 #let nested-state = state("equate/nested-depth", 0)
@@ -282,7 +285,7 @@
   ]
 
   // Consider lines of other equations in shared alignment block.
-  let extra-lines = if share-align-state.get() {
+  let extra-lines = if share-align-state.get() > 0 {
     let num = counter("equate/align/counter").get().first()
     let align-state = state("equate/align/" + str(num), ())
     remove-labels(align-state.final())
@@ -384,7 +387,16 @@
 // each new equation will get a new main number. Equations with a revoke label
 // will not share alignment with other equations in this block.
 #let share-align(body) = {
-  share-align-state.update(true)
+  context assert(
+    equate-state.get() > 0,
+    message: "shared alignment block requires equate to be enabled."
+  )
+
+  share-align-state.update(n => {
+    assert.eq(n, 0, message: "nested shared alignment blocks are not supported.")
+    n + 1
+  })
+
   let align-counter = counter("equate/align/counter")
   align-counter.step()
 
@@ -398,7 +410,7 @@
   }
 
   body
-  share-align-state.update(false)
+  share-align-state.update(n => n - 1)
 }
 
 // Applies show rules to the given body, so that block equations can span over
@@ -511,7 +523,7 @@
     )
 
     // Short-circuit for single-line equations.
-    if lines.len() == 1 and not share-align-state.get() {
+    if lines.len() == 1 and share-align-state.get() == 0 {
       if it.numbering == none { return it }
       if numbering(it.numbering, 1) == none { return it }
 
@@ -613,5 +625,7 @@
   // Add show rule for referencing equation lines.
   show ref: equate-ref
 
+  equate-state.update(n => n + 1)
   body
+  equate-state.update(n => n - 1)
 }
