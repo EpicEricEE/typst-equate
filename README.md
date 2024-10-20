@@ -40,6 +40,9 @@ product of two vectors.
 ![Result of example code (page 1).](assets/example-1.svg)  
 ![Result of example code (page 2).](assets/example-2.svg)
 
+### Shared Alignment Blocks
+If you want to interrupt a multi-line equation with text or other elements, you can use the `share-align` function to create a shared alignment block. This will ensure that all block equations within that block (that don't have the `<equate:revoke>` label) share their alignment points.
+
 ### Local Usage
 If you only want to use the package features on selected equations, you can also apply the `equate` function directly to the equation. This will override the default behavior for the current equation only. Note, that this will require you to use the `equate` function as a show rule for references, as shown in the following example:
 

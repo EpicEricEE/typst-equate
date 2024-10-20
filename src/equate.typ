@@ -7,8 +7,11 @@
 // Element function for a counter update.
 #let counter-update = counter(math.equation).update(1).func()
 
-// Sub-numbering state.
-#let state = state("equate/sub-numbering", false)
+// State for tracking the sub-numbering property.
+#let sub-numbering-state = state("equate/sub-numbering", false)
+
+// State for tracking whether we're in a shared alignment block.
+#let share-align-state = state("equate/share-align", false)
 
 // Show rule necessary for referencing equation lines, as the number is not
 // stored in a counter, but as metadata in a figure.
@@ -20,7 +23,7 @@
   if it.element.body.func() != metadata { return it }
 
   // Display correct number, depending on whether sub-numbering was enabled.
-  let nums = if state.at(it.element.location()) {
+  let nums = if sub-numbering-state.at(it.element.location()) {
     it.element.body.value
   } else {
     // (3, 1): 3 + 1 - 1 = 3
@@ -249,6 +252,20 @@
   )
 }
 
+// Remove labels from lines, so that they don't interfere when measuring.
+#let remove-labels(lines) = {
+  lines.map(line => {
+    if line.len() == 0 { return line }
+    if line.last().func() != raw { return line }
+    if line.last().lang != "typc" { return line }
+    if line.last().text.match(regex("^<.+>$")) == none { return line }
+
+    line.remove(-1)
+    if line.at(-1, default: none) == [ ] { line.remove(-1) }
+    return line
+  })
+}
+
 // Splitting an equation into multiple lines breaks the inbuilt alignment
 // with alignment points, so it is emulated here by adding spacers manually.
 #let realign(lines) = {
@@ -261,9 +278,20 @@
     ) <equate:revoke>
   ]
 
+  // Consider lines of other equations in shared alignment block.
+  let extra-lines = if share-align-state.get() {
+    let num = counter("equate/align/counter").get().first()
+    let align-state = state("equate/align/" + str(num), ())
+    remove-labels(align-state.final())
+  } else {
+    ()
+  }
+
+  let lines = extra-lines + lines
+
   // Short-circuit if no alignment points.
   if lines.all(line => align-point() not in line) {
-    return lines
+    return lines.slice(extra-lines.len())
   }
 
   // Store widths of each part between alignment points.
@@ -343,7 +371,31 @@
     line
   })
 
-  lines
+  lines.slice(extra-lines.len())
+}
+
+// Any block equation inside this block will share alignment points, thus
+// allowing equations to be interrupted by text and still be aligned.
+// 
+// Sub-numbering is not (yet) continued across equations in this block, so
+// each new equation will get a new main number. Equations with a revoke label
+// will not share alignment with other equations in this block.
+#let share-align(body) = {
+  share-align-state.update(true)
+  let align-counter = counter("equate/align/counter")
+  align-counter.step()
+
+  show math.equation.where(block: true): it => {
+    if it.has("label") and it.label == <equate:revoke> {
+      return it
+    }
+    let align-state = state("equate/align/" + str(align-counter.get().first()), ())
+    align-state.update(lines => lines + to-lines(it))
+    it
+  }
+
+  body
+  share-align-state.update(false)
 }
 
 // Applies show rules to the given body, so that block equations can span over
@@ -451,7 +503,7 @@
     )
 
     // Short-circuit for single-line equations.
-    if lines.len() == 1 {
+    if lines.len() == 1 and not share-align-state.get() {
       if it.numbering == none { return it }
       if numbering(it.numbering, 1) == none { return it }
 
@@ -464,7 +516,7 @@
 
       return {
         // Update state to allow correct referencing.
-        state.update(_ => sub-numbering)
+        sub-numbering-state.update(_ => sub-numbering)
 
         layout-line(
           lines.first(),
@@ -492,7 +544,7 @@
     }
 
     // Update state to allow correct referencing.
-    state.update(_ => sub-numbering)
+    sub-numbering-state.update(_ => sub-numbering)
 
     // Layout equation as grid to allow page breaks.
     block(grid(
