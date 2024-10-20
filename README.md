@@ -1,22 +1,59 @@
 # equate
-A package for improved layout of equations and mathematical expressions.
 
-When applied, this package will split up multi-line block equations into multiple elements, so that each line can be assigned a separate number. By default, the equation counter is incremented for each line, but this behavior can be changed by setting the `sub-numbering` argument to `true`. In this case, the equation counter will only be incremented once for the entire block, and each line will be assigned a sub-number like `1a`, `2.1`, or similar, depending on the set equation numbering. You can also set the `number-mode` argument to `"label"` to only number labelled lines. If a label is only applied to the full equation, all lines will be numbered.
-
-This splitting also makes it possible to spread equations over page boundaries while keeping alignment in place, which can be useful for long derivations or proofs. This can be configured by the `breakable` parameter of the `equate` function, or by setting the `breakable` parameter of `block` for equations via a show-set rule. Additionally, the alignment of the equation number is improved, so that it always matches the baseline of the equation.
-
-If you want to create a "standard" equation with a single equation number centered across all lines, you can attach the `<equate:revoke>` label to the equation. This will disable the effect of this package for the current equation. This label can also be used in single lines of an equation to disable numbering for that line only.
+A package for various enhancements for mathematical expressions.
 
 ## Usage
-The package comes with a single `equate` function that is supposed to be used as a template. It takes two optional arguments for customization:
 
-| Argument        | Type                | Description                                                | Default  |
-| --------------- | ------------------- | ---------------------------------------------------------- | -------- |
-| `breakable`     | `boolean`, `auto`   | Whether to allow the equation to break across pages.       | `auto`   |
-| `sub-numbering` | `boolean`           | Whether to assign sub-numbers to each line of an equation. | `false`  |
-| `number-mode`   | `"line"`, `"label"` | Whether to number all lines or only those with a label.    | `"line"` |
+The main function of this package is `equate`, which can be applied in a show-all rule to enable the package features for all equations. The function takes a single positional argument (for the body of the show rule), and several optional keyword arguments for customization:
 
-To reference a specific line of an equation, include the label at the end of the line, like in the following example:
+| Parameter       | Type                | Description                                          | Default  |
+| --------------- | ------------------- | ---------------------------------------------------- | -------- |
+| `breakable`     | `boolean`, `auto`   | Whether equations can break across pages or columns. | `auto`   |
+| `sub-numbering` | `boolean`           | Whether to assign sub-numbers to each equation line. | `false`  |
+| `number-mode`   | `"line"`, `"label"` | Which lines of the equation to number.               | `"line"` |
+
+Some notes about these parameters:
+
+- Starting from Typst v0.12.0, there is built-in support for breakable block equations. The `breakable` can still be used to override the default behavior. The value `auto` defers to the `block.breakable` setting in the context of equations.
+
+- When sub-numbering is enabled, the equation numbering format should be set to include the sub-number, such as in `(1.1)`. If only a single line of an equation is labeled, only the main equation number will be shown.
+
+- A line can be labeled by inserting a label in code mode at the end of the line, before the line break, for example:
+
+  ```typ
+  $ E &= m c^2 #<short> \
+      &= sqrt(p^2 c^2 + m^2 c^4) #<long> $
+  ```
+
+In Typst versions prior to v0.12.0, equation numbers were centered in equation blocks, even for single-line equations. This package corrects that behavior by aligning numbers with the baseline of the equation lines instead. Typst v0.12.0 has an internal fix for this, but the package's layout adjustments remain in place for backward compatibility with earlier versions.
+
+### The revoke label
+
+The `<equate:revoke>` label can be used on an equation or a specific equation line for the following purposes:
+
+- **For an entire equation:** Disables the package features, allowing you to revert to per-block numbering.
+
+- **For equations in [shared alignment blocks](#shared-alignment-points):** The label will additionally ensure that the equation does not share alignment points with other equations in the block.
+
+- **For a specific line:** Disables numbering on that line. This can be useful when `number-mode` is set to `"line"`, but you wish to exclude certain lines from being numbered.
+
+> **Note:** The current limitation is that Typst does not support attaching multiple labels to the same element. Thus, using the revoke label means no other labels can be added to the same line or equation.
+
+### Shared Alignment Points
+
+In some cases, you may want to interrupt a multi-line equation with a paragraph of text or other elements. To ensure that equations after the interruption maintain alignment with the previous ones, you can use the `share-align` function to create a shared alignment block. This will make all block equations within the block share their alignment points.
+
+### Scoped Usage
+
+If you want to use the package features on selected equations only, you can skip the show-all rule and apply the `equate` function directly to individual equations. As the package requires the use of a show rule on the `ref` element for line-specific references, you will also need to use the `equate` function either as a show rule on references, or directly on the reference or label itself.
+
+</details>
+
+### Performance Considerations
+
+Since this package reimplements the equation alignment system in pure Typst, it may impact performance due to the high number of measurements and layout passes required. It is recommended to use the package sparingly, especially in large documents with many equations.
+
+## Example
 
 ```typ
 #import "@preview/equate:0.2.1": equate
@@ -39,30 +76,3 @@ product of two vectors.
 
 ![Result of example code (page 1).](assets/example-1.svg)  
 ![Result of example code (page 2).](assets/example-2.svg)
-
-### Shared Alignment Blocks
-If you want to interrupt a multi-line equation with text or other elements, you can use the `share-align` function to create a shared alignment block. This will ensure that all block equations within that block (that don't have the `<equate:revoke>` label) share their alignment points.
-
-### Local Usage
-If you only want to use the package features on selected equations, you can also apply the `equate` function directly to the equation. This will override the default behavior for the current equation only. Note, that this will require you to use the `equate` function as a show rule for references, as shown in the following example:
-
-```typ
-#import "@preview/equate:0.2.1": equate
-
-// Allow references to a line of the equation.
-#show ref: equate
-
-#set math.equation(numbering: "(1.1)", supplement: "Eq.")
-
-#equate($
-  E &= m c^2 #<short> \
-    &= sqrt(p^2 c^2 + m^2 c^4) #<long>
-$)
-
-While @short is the famous equation by Einstein, @long is a
-more general form of the energy-momentum relation.
-```
-
-![Result of example code.](assets/example-local.svg)
-
-As an alternative to the show rule, it is also possible to manually wrap each reference in an `equate` function, though this is less convenient and more prone to mistakes.
