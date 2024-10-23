@@ -386,6 +386,8 @@
 // Sub-numbering is not (yet) continued across equations in this block, so
 // each new equation will get a new main number. Equations with a revoke label
 // will not share alignment with other equations in this block.
+// 
+// Requires the equate show rule to be enabled.
 #let share-align(body) = {
   context assert(
     equate-state.get() > 0,
