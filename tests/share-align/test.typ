@@ -11,6 +11,33 @@
   $     c &= b - a $
 ]
 
+#line(length: 100%)
+
+// Test nested shared alignment blocks.
+
+#share-align[
+  $ a + b &= c + d $
+  Blah blah blah. intertext blah.
+  $ a^2 + b^2 &= c^2 $
+
+  $ a + b &= c + d \
+    a^2 + b^2 &= c^2 $ <equate:revoke>
+
+  #share-align[
+    $ a &= b \
+        &= c $
+    And because of how `c`'s tend to behave, we then have
+    $   &= d $
+  ]
+
+  And back to the start
+  $ a^n + b^n + c^n &= d^n $
+] 
+
+#line(length: 100%)
+
+// Test with numbering.
+
 #set math.equation(numbering: "(1.1)")
 
 #share-align[

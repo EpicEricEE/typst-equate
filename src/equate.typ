@@ -13,8 +13,8 @@
 // State for tracking the sub-numbering property.
 #let sub-numbering-state = state("equate/sub-numbering", false)
 
-// State for tracking whether we're in a shared alignment block.
-#let share-align-state = state("equate/share-align", 0)
+// State for tracking the shared alignment block we're in.
+#let share-align-state = state("equate/share-align", (stack: (), max: 0))
 
 // State for tracking whether we're in a nested equation.
 #let nested-state = state("equate/nested-depth", 0)
@@ -285,8 +285,8 @@
   ]
 
   // Consider lines of other equations in shared alignment block.
-  let extra-lines = if share-align-state.get() > 0 {
-    let num = counter("equate/align/counter").get().first()
+  let extra-lines = if share-align-state.get().stack != () {
+    let num = share-align-state.get().stack.last()
     let align-state = state("equate/align/" + str(num), ())
     remove-labels(align-state.final())
   } else {
@@ -394,25 +394,29 @@
     message: "shared alignment block requires equate to be enabled."
   )
 
-  share-align-state.update(n => {
-    assert.eq(n, 0, message: "nested shared alignment blocks are not supported.")
-    n + 1
-  })
-
-  let align-counter = counter("equate/align/counter")
-  align-counter.step()
+  share-align-state.update(((stack, max)) => (
+    stack: stack + (max + 1,),
+    max: max + 1
+  ))
 
   show math.equation.where(block: true): it => {
+    // Allow a way to exclude equations from shared alignment.
     if it.has("label") and it.label == <equate:revoke> {
       return it
     }
-    let align-state = state("equate/align/" + str(align-counter.get().first()), ())
+
+    let num = share-align-state.get().stack.last()
+    let align-state = state("equate/align/" + str(num), ())
     align-state.update(lines => lines + to-lines(it))
     it
   }
 
   body
-  share-align-state.update(n => n - 1)
+
+  share-align-state.update(((stack, max)) => (
+    stack: stack.slice(0, -1),
+    max: max
+  ))
 }
 
 // Applies show rules to the given body, so that block equations can span over
@@ -525,7 +529,7 @@
     )
 
     // Short-circuit for single-line equations.
-    if lines.len() == 1 and share-align-state.get() == 0 {
+    if lines.len() == 1 and share-align-state.get().stack == () {
       if it.numbering == none { return it }
       if numbering(it.numbering, 1) == none { return it }
 

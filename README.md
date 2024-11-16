@@ -41,7 +41,7 @@ The `<equate:revoke>` label can be used on an equation or a specific equation li
 
 ### Shared Alignment Points
 
-In some cases, you may want to interrupt a multi-line equation with a paragraph of text or other elements. To ensure that equations after the interruption maintain alignment with the previous ones, you can use the `share-align` function to create a shared alignment block. This will make all block equations within the block share their alignment points.
+In some cases, you may want to interrupt a multi-line equation with a paragraph of text or other elements. To ensure that equations after the interruption maintain alignment with the previous ones, you can use the `share-align` function to create a shared alignment block. This will make all block equations within the block share their alignment points. Any nested shared alignment blocks will be treated as separate blocks and will not share alignment points with the parent block or with each other.
 
 ### Scoped Usage
 
