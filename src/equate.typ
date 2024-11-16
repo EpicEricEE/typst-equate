@@ -45,7 +45,7 @@
   let num = numbering(
     if type(it.element.numbering) == str {
       // Trim numbering pattern of prefix and suffix characters.
-      let counting-symbols = ("1", "a", "A", "i", "I", "一", "壹", "あ", "い", "ア", "イ", "א", "가", "ㄱ", "*")
+      let counting-symbols = ("1", "a", "A", "i", "I", "一", "壹", "あ", "い", "ア", "イ", "א", "가", "ㄱ", "*", "①", "⓵")
       let prefix-end = it.element.numbering.codepoints().position(c => c in counting-symbols)
       let suffix-start = it.element.numbering.codepoints().rev().position(c => c in counting-symbols)
       it.element.numbering.slice(prefix-end, if suffix-start == 0 { none } else { -suffix-start })
