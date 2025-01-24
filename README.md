@@ -16,7 +16,7 @@ Some notes about these parameters:
 
 - Starting from Typst v0.12.0, there is built-in support for breakable block equations. The `breakable` can still be used to override the default behavior. The value `auto` defers to the `block.breakable` setting in the context of equations.
 
-- When sub-numbering is enabled, the equation numbering format should be set to include the sub-number, such as in `(1.1)`. If only a single line of an equation is labeled, only the main equation number will be shown.
+- When sub-numbering is enabled, the equation numbering format should be set to include the sub-number, such as in `(1.1)`.
 
 - A line can be labeled by inserting a label in code mode at the end of the line, before the line break, for example:
 

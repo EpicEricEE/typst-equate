@@ -37,6 +37,8 @@ $ y + z \
 
 $ a + b $ <label>
 
+$ a + b_0 #<label> $
+
 $ c + d \
   e + f #<label> \
   g + h \

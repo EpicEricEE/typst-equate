@@ -237,8 +237,8 @@
         // Remove trailing spacing (before label).
         if line.at(-2, default: none) == [ ] { line.remove(-2) }
 
-        // Append sub-numbering only if there are multiple numbered lines.
-        let nums = main-number + if numbered.len() > 1 {
+        // Append sub-numbering.
+        let nums = main-number + if numbered.len() > 0 {
           (numbered.position(n => n == i) + 1,)
         }
 
@@ -534,7 +534,12 @@
       if numbering(it.numbering, 1) == none { return it }
 
       let number = if numbered.len() > 0 {
-        numbering(it.numbering, main-number)
+        let include-sub-number = sub-numbering and (
+          lines.first().last().func() == figure
+          and lines.first().last().kind == math.equation
+          and lines.first().last().body.func() == metadata
+        )
+        numbering(it.numbering, main-number, ..if include-sub-number { (1,) })
       } else {
         // Step back counter as this equation should not be counted.
         counter(math.equation).update(n => n - 1)
@@ -583,7 +588,7 @@
         } else if sub-number == none {
           // Step back counter as this equation should not be counted.
           counter(math.equation).update(n => n - 1)
-        } else if sub-numbering and numbered.len() > 1 {
+        } else if sub-numbering {
           numbering(it.numbering, main-number, sub-number + 1)
         } else {
           numbering(it.numbering, main-number + sub-number)
