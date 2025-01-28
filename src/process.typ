@@ -1,66 +1,57 @@
+// Split the body of an equation into lines if it is a multi-line equation.
+// Otherwise, return the body as a single line.
+#let to-lines(eq) = {
+  let lines = if eq.body.func() == [].func() {
+    eq.body.children.split(linebreak())
+  } else {
+    ((eq.body,),)
+  }
+
+  // Trim spaces at start and end of line.
+  let lines = lines.map(line => {
+    if line.at(0, default: none) == [ ]  { line = line.slice(1) }
+    if line.at(-1, default: none) == [ ] { line = line.slice(0, -1) }
+    line
+  })
+
+  lines
+}
+
+#let numbered(line, number-mode) = {
+  let (.., revoked, label) = line
+  // TODO: Find out how to get it.has("label")
+  return (
+    (number-mode == "block") or
+    (number-mode == "line" and not revoked) or
+    (number-mode == "label" and (label != none or (it.has("label") and not revoked)))
+  )
+}
+
 /// Extract the "real" label from an equation line (if any) and returns the
 /// line without the label, and the extracted label itself.
-#let extract-label(line) = {
-  if line == () { return (line, none) }
-  if type(line.last()) != content { return (line, none) }
-  if line.last().func() != raw { return (line, none) }
-  if line.last().lang != "typc" { return (line, none) }
-  let match = line.last().text.match(regex("^<(.+)>$"))
-  if match == none { return (line, none) }
+#let process-line(line) = {
+  if (
+    line == ()
+    or type(line.last()) != content
+    or line.last().func() != raw
+    or line.last().lang != "typc"
+    or line.last().text.match(regex("^<(.+)>$")) == none
+  ) {
+    return (
+      body: line,
+      revoked: false,
+      label: none
+    )
+  }
 
   // Remove the original label and any trailing space.
   let _ = line.pop()
   let _ = if line.at(-1, default: none) == [ ] { line.pop() }
 
-  (line, label(match.captures.first()))
+  let label = label(line.last().text.slice(1, -1))
+  (
+    body: line,
+    revoked: label == <equate:revoke>,
+    label: if label != <equate:revoke> { label },
+  )
 }
-
-/// Replace labels in the given equation lines with appropriately labeled
-/// hidden figures to allow for referencing.
-#let process(
-  numbering: none,
-  supplement: auto,
-  consider: (),
-  lines,
-) = {
-  let labels = lines.enumerate().map(((i, line)) => (i, ..extract-label(line)))
-
-  // Keep track of label number and line number, as they aren't always stepped.
-  // TODO: Get starting values from shared alignment state.
-  let line-number = 1
-  let label-number = 1
-
-  for (i, line, label) in labels {
-    // We store all number information in a (hidden) figure, so that we can
-    // retrieve it later and use it for referencing.
-    let figure = figure(
-      kind: math.equation,
-      numbering: numbering,
-      supplement: supplement,
-      metadata((
-        main-number: counter(math.equation).get(),
-        line-number: if label != <equate:revoke> { line-number },
-        label-number: if label not in (none, <equate:revoke>) { label-number },
-      ))
-    )
-
-    if label not in (none, <equate:revoke>) {
-      figure = [#figure#label]
-      label-number += 1
-    }
-
-    if label != <equate:revoke> {
-      line-number += 1
-    }
-
-    lines.at(i) = (..line, figure)
-  }
-
-  lines
-}
-
-/// Get the metadata of a labeled equation line.
-#let get-metadata(line) = line.last().body.value
-
-/// Check if an equation line is labeled with a hidden figure.
-#let is-labeled(line) = get-metadata(line).label-number != none
