@@ -1,1 +1,2 @@
-#import "equate.typ": equate, share-align
+#import "combine.typ": combine as share-align
+#import "equate.typ": equate

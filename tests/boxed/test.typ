@@ -1,7 +1,8 @@
 #import "/src/lib.typ": equate
 
 #set page(width: 6cm, height: auto, margin: 1em)
-#show: equate.with(breakable: true)
+#show math.equation.where(block: true): set block(breakable: true)
+#show: equate
 
 // Test equation sizing when given constraints.
 
