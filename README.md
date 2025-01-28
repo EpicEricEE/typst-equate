@@ -49,8 +49,6 @@ In some cases, you may want to interrupt a multi-line equation with a paragraph 
 
 If you want to use the package features on selected equations only, you can skip the show-all rule and apply the `equate` function directly to individual equations. As the package requires the use of a show rule on the `ref` element for line-specific references, you will also need to use the `equate` function either as a show rule on references, or directly on the reference or label itself.
 
-</details>
-
 ### Performance Considerations
 
 Since this package reimplements the equation alignment system in pure Typst, it may impact performance due to the high number of measurements and layout passes required. It is recommended to use the package sparingly, especially in large documents with many equations.
@@ -58,7 +56,7 @@ Since this package reimplements the equation alignment system in pure Typst, it 
 ## Example
 
 ```typ
-#import "@preview/equate:0.2.1": equate
+#import "@preview/equate:0.3.0": equate
 
 #show: equate.with(breakable: true, sub-numbering: true)
 #set math.equation(numbering: "(1.1)")
