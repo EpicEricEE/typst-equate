@@ -1,22 +1,3 @@
-// Split the body of an equation into lines if it is a multi-line equation.
-// Otherwise, return the body as a single line.
-#let to-lines(eq) = {
-  let lines = if eq.body.func() == [].func() {
-    eq.body.children.split(linebreak())
-  } else {
-    ((eq.body,),)
-  }
-
-  // Trim spaces at start and end of line.
-  let lines = lines.map(line => {
-    if line.at(0, default: none) == [ ]  { line = line.slice(1) }
-    if line.at(-1, default: none) == [ ] { line = line.slice(0, -1) }
-    line
-  })
-
-  lines
-}
-
 /// Extract the "real" label from an equation line (if any) and returns the
 /// line without the label, and the extracted label itself.
 #let process-line(line) = {
@@ -45,6 +26,25 @@
   )
 }
 
+// Split the body of an equation into lines if it is a multi-line equation.
+// Otherwise, return the body as a single line.
+#let to-lines(eq) = {
+  let lines = if eq.body.func() == [].func() {
+    eq.body.children.split(linebreak())
+  } else {
+    ((eq.body,),)
+  }
+
+  // Trim spaces at start and end of line.
+  let lines = lines.map(line => {
+    if line.at(0, default: none) == [ ]  { line = line.slice(1) }
+    if line.at(-1, default: none) == [ ] { line = line.slice(0, -1) }
+    line
+  })
+
+  lines.map(process-line)
+}
+
 /// Return whether a given line should be numbered based on the numbering mode
 /// and the line's properties.
 #let numbered(line, number-mode, parent) = {
@@ -68,8 +68,7 @@
     // However, as soon as a single line is labeled, only labeled lines should
     // be numbered.
     if parent.has("label") {
-      let lines = to-lines(parent).map(process-line)
-      return lines.all(line => line.label == none) and not revoked
+      return to-lines(parent).all(line => line.label == none) and not revoked
     }
   }
 

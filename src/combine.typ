@@ -1,5 +1,5 @@
 #import "common.typ": equate-state
-#import "process.typ": to-lines, process-line, numbered
+#import "line.typ": to-lines, numbered
 
 #let combine-state = state("equate/combine", (:))
 #let combine-counter = counter("equate/combine/counter")
@@ -38,7 +38,7 @@
     if it.has("label") and it.label == <equate:revoke> { return it }
 
     // Push the lines of the current equation into the alignment state.
-    let lines = to-lines(it).map(process-line)
+    let lines = to-lines(it)
     combine-sub-state().update(state => (
       lines: state.lines + lines,
       numbered: state.numbered or lines.any(line => {

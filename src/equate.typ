@@ -1,7 +1,7 @@
 #import "align.typ": realign
 #import "combine.typ": combine, combine-state, combined-lines
 #import "common.typ": revoked, equate-state
-#import "process.typ": to-lines, process-line, numbered
+#import "line.typ": to-lines, numbered
 
 #let nesting-state = state("equate/nesting", 0)
 
@@ -47,8 +47,8 @@
     let lines = {
       // First, split the equation into lines and extract any labels.
       let (lines, revoked, labels) = array.zip(exact: true,
-        ..to-lines(it).map(line => process-line(line).values()
-      ))
+        ..to-lines(it).map(dictionary.values)
+      )
 
       // Realign the lines considering all lines in the current combine block.
       let consider = combined-lines().map(line => line.body)
