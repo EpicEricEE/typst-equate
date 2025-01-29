@@ -48,7 +48,7 @@
 
     it
 
-    if sub-numbering and not numbering {
+    if (number-mode == "block" or sub-numbering) and not numbering {
       // If numbering is not shared, update the counters at the end of each
       // equation, so that the main number is increased for the next equation.
       counter(math.equation).step()
@@ -60,7 +60,7 @@
 
   // If numbering is shared, only update the counters at the end of the block
   // after all equations with the same main number have been processed.
-  if sub-numbering and numbering {
+  if (number-mode == "block" or sub-numbering) and numbering {
     // Don't step when no numbered equation in block
     context if combine-sub-state().final().numbered {
       counter(math.equation).step()

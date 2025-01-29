@@ -52,9 +52,9 @@
 
   let (.., revoked, label) = line
   if number-mode == "block" {
-    // In block numbering mode, only the parent equation is numbered, thus the
-    // result of this function should never be used.
-    return false
+    // In block numbering mode, only the parent equation is numbered, thus we
+    // consider all lines as numbered.
+    return true
   }
 
   if number-mode == "line" {

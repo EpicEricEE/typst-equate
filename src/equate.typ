@@ -111,6 +111,10 @@
           )
         }
       )
+
+      // Step back counter to continue with the same main number in the next
+      // equation. We cannot allow the step here, as we might need the same
+      // main number when in a combine block.
       counter(math.equation).update(n => n - 1)
     } else {
       // Put lines in separate equations for per-line numbering.
@@ -164,7 +168,7 @@
     // is done at the end of the block or equation. Otherwise, it is done here.
     if combine-state.get() == (:) {
       counter("equate/line").update(0)
-      if sub-numbering and lines.any(line => line.numbered) {
+      if (number-mode == "block" or sub-numbering) and lines.any(line => line.numbered) {
         counter(math.equation).step()
       }
     }
