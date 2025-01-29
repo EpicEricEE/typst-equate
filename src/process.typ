@@ -45,10 +45,9 @@
   }
 
   // Remove the original label and any trailing space.
-  let _ = line.pop()
+  let label = label(line.pop().text.slice(1, -1))
   let _ = if line.at(-1, default: none) == [ ] { line.pop() }
 
-  let label = label(line.last().text.slice(1, -1))
   (
     body: line,
     revoked: label == <equate:revoke>,
