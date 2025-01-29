@@ -5,6 +5,85 @@
 
 #let nesting-state = state("equate/nesting", 0)
 
+// Layout all lines in a single equation, so that the full equation is only
+// assigned a single number.
+#let layout-block(it, lines) = {
+  assert(
+    lines.all(line => not line.revoked and line.label == none),
+    message: "cannot label individual lines in block numbering mode"
+  )
+
+  let numbering = if it.numbering != none {
+    (..) => numbering(it.numbering, ..counter(math.equation).get())
+  }
+
+  revoked(
+    numbering: numbering,
+    lines.map(line => line.body).join(linebreak()) + if numbering != none {
+      h(0pt) + figure(
+        none,
+        caption: [],
+        kind: math.equation,
+        supplement: it.supplement,
+        numbering: numbering
+      )
+    }
+  )
+
+  // Step back counter to continue with the same main number in the next
+  // equation. We cannot allow the step here, as we might need the same
+  // main number when in a combine block.
+  counter(math.equation).update(n => n - 1)
+}
+
+// Layout every line in a separate equation, so that each line can be assigned
+// a separate number.
+#let layout-grid(it, lines, sub-numbering) = {
+  grid(
+    columns: 1,
+    row-gutter: par.leading,
+    ..lines.map(line => {
+      if line.numbered { counter("equate/line").step() }
+      
+      // Total number of lines in the equation.
+      let total = if combine-state.get().at("numbering", default: false) {
+        combined-lines().len()
+      } else {
+        lines.len()
+      }
+
+      let numbering = if line.numbered {
+        (..) => {
+          let main = counter(math.equation).get().first()
+          let sub  = counter("equate/line").get().first()
+          let nums = if sub-numbering and total > 1 { (main, sub) } else { (main,) }
+          numbering(it.numbering, ..nums) 
+        }
+      }
+      
+      revoked(
+        numbering: numbering,
+        line.body + if line.numbered [
+          // Add figure to allow referencing and outlining.
+          #h(0pt) #figure(
+            none,
+            caption: [],
+            kind: math.equation,
+            supplement: it.supplement,
+            numbering: numbering
+          ) #line.label
+        ],
+      )
+
+      if sub-numbering and line.numbered {
+        // Step back counter to continue with the same main number in the
+        // next line.
+        counter(math.equation).update(n => n - 1)
+      }
+    })
+  )
+}
+
 #let equate(
   number-mode: auto,
   sub-numbering: auto,
@@ -87,80 +166,11 @@
       counter(math.equation).update(n => n - 1)
     }
 
+    // Layout the equation.
     if number-mode == "block" {
-      // Put all lines in a single equation, but make sure that no lines are
-      // labeled, as they can't be numbered individually.
-      assert(
-        lines.all(line => not line.revoked and line.label == none),
-        message: "cannot label individual lines in block numbering mode"
-      )
-
-      let numbering = if it.numbering != none {
-        (..) => numbering(it.numbering, ..counter(math.equation).get())
-      }
-
-      revoked(
-        numbering: numbering,
-        lines.map(line => line.body).join(linebreak()) + if numbering != none {
-          h(0pt) + figure(
-            none,
-            caption: [],
-            kind: math.equation,
-            supplement: it.supplement,
-            numbering: numbering
-          )
-        }
-      )
-
-      // Step back counter to continue with the same main number in the next
-      // equation. We cannot allow the step here, as we might need the same
-      // main number when in a combine block.
-      counter(math.equation).update(n => n - 1)
+      layout-block(it, lines)
     } else {
-      // Put lines in separate equations for per-line numbering.
-      grid(
-        columns: 1,
-        row-gutter: par.leading,
-        ..lines.map(line => {
-          if line.numbered { counter("equate/line").step() }
-          
-          // Total number of lines in the equation.
-          let total = if combine-state.get().at("numbering", default: false) {
-            combined-lines().len()
-          } else {
-            lines.len()
-          }
-
-          let numbering = if line.numbered {
-            (..) => {
-              let main = counter(math.equation).get().first()
-              let sub  = counter("equate/line").get().first()
-              let nums = if sub-numbering and total > 1 { (main, sub) } else { (main,) }
-              numbering(it.numbering, ..nums) 
-            }
-          }
-          
-          revoked(
-            numbering: numbering,
-            line.body + if line.numbered [
-              // Add figure to allow referencing and outlining.
-              #h(0pt) #figure(
-                none,
-                caption: [],
-                kind: math.equation,
-                supplement: it.supplement,
-                numbering: numbering
-              ) #line.label
-            ],
-          )
-
-          if sub-numbering and line.numbered {
-            // Step back counter to continue with the same main number in the
-            // next line.
-            counter(math.equation).update(n => n - 1)
-          }
-        })
-      )
+      layout-grid(it, lines, sub-numbering)
     }
 
     // After the last line, the counter has to be stepped again, so that the main
