@@ -17,15 +17,6 @@
   lines
 }
 
-#let numbered(line, number-mode, parent) = {
-  let (.., revoked, label) = line
-  return parent.numbering != none and (
-    (number-mode == "block") or
-    (number-mode == "line" and not revoked) or
-    (number-mode == "label" and (label != none or (parent.has("label") and not revoked)))
-  )
-}
-
 /// Extract the "real" label from an equation line (if any) and returns the
 /// line without the label, and the extracted label itself.
 #let process-line(line) = {
@@ -52,4 +43,35 @@
     revoked: label == <equate:revoke>,
     label: if label != <equate:revoke> { label },
   )
+}
+
+/// Return whether a given line should be numbered based on the numbering mode
+/// and the line's properties.
+#let numbered(line, number-mode, parent) = {
+  if parent.numbering == none { return false }
+
+  let (.., revoked, label) = line
+  if number-mode == "block" {
+    // In block numbering mode, only the parent equation is numbered, thus the
+    // result of this function should never be used.
+    return false
+  }
+
+  if number-mode == "line" {
+    return not revoked
+  }
+
+  if number-mode == "label" {
+    if label != none { return true }
+
+    // If only the parent equation is labeled, all lines should be numbered.
+    // However, as soon as a single line is labeled, only labeled lines should
+    // be numbered.
+    if parent.has("label") {
+      let lines = to-lines(parent).map(process-line)
+      return lines.all(line => line.label == none) and not revoked
+    }
+  }
+
+  false
 }
