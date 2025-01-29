@@ -5,6 +5,11 @@
 /// Measures the width of the given slice of a line.
 #let width(slice) = measure(revoked(slice.join())).width
 
+/// Creates a horizontal spacer with the given width and a color for debugging.
+#let spacer(width, fill) = if width > 1e-6pt {
+  h(0pt) + box(width: width, fill: fill, stroke: 0.4pt) + h(0pt)
+}
+
 /// Realigns the given equation lines by emulating the inbuilt alignment
 /// algorithm with interspersed horizontal spacings.
 #let realign(
@@ -29,37 +34,35 @@
 
   let columns = array.zip(..rows, exact: true)
   let column-widths = columns.map(column => calc.max(..column.map(width)))
-  let multi-column-widths = range(1, columns.len()).map(i => {
-    let rows = array.zip(..columns.slice(0, i + 1), exact: true)
+  let bicolumn-widths = range(columns.len() - 1).map(i => {
+    let rows = array.zip(..columns.slice(i, count: 2), exact: true)
     calc.max(..rows.map(row => width(row.join())))
   })
 
   // Add spacers so that the all cells in a column have the same width.
   rows = rows.map(row => row.enumerate().map(((i, cell)) => {
     let delta = column-widths.at(i) - width(cell)
-    let spacer = if delta > 0pt { h(delta) }
+    let spacer = spacer(delta, yellow)
     // Align content right or left depending on the column index.
     if calc.even(i) { (spacer, ..cell) } else { (..cell, spacer) }
   }))
 
-  // Update multi-column widths to include spacers. If the new width is smaller
+  // Update bicolumn widths to include spacers. If the new width is smaller
   // than before, keep the larger width to ensure correct spacing.
   columns = array.zip(..rows, exact: true)
-  multi-column-widths = range(1, columns.len()).map(i => {
-    let rows = array.zip(..columns.slice(0, i + 1), exact: true)
-    calc.max(..rows.map(row => calc.max(multi-column-widths.at(i - 1), width(row.join()))))
+  bicolumn-widths = range(columns.len() - 1).map(i => {
+    let rows = array.zip(..columns.slice(i, count: 2), exact: true)
+    calc.max(..rows.map(row => calc.max(bicolumn-widths.at(i), width(row.join()))))
   })
 
   // Add more spacers so that all slices of multiple cells have the same width.
   rows = rows.map(row => {
-    for i in range(2, columns.len()) {
-      let multi-cell = (..row.slice(0, i).join(), h(0pt), ..row.at(i))
-      let delta = multi-column-widths.at(i - 1) - width(multi-cell)
-      if delta > 0pt {
-        // Always add spacer to the left of the cell content, as we only want
-        // to fix the spacing between this cell and the previous one.
-        row.at(i) = (h(delta), ..row.at(i))
-      }
+    for i in range(columns.len() - 1) {
+      let bicell = (..row.at(i), h(0pt), ..row.at(i + 1))
+      let delta = bicolumn-widths.at(i) - width(bicell)
+      // Always add spacer to the right of the cell content, as we only want
+      // to fix the spacing between this cell and the next one.
+      row.at(i) = (..row.at(i), spacer(delta, green))
     }
     row
   })

@@ -7,5 +7,5 @@
   if args.pos() == () {
     args = arguments(..args.named(), body: none)
   }
-  [#math.equation(block: true, ..args) <equate:revoke>]
+  [#math.equation(block: true, numbering: none, ..args) <equate:revoke>]
 }

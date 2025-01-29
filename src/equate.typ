@@ -4,7 +4,7 @@
 #import "process.typ": to-lines, process-line
 
 // Parameters of the equate function.
-#let equate(number-mode: "block", sub-numbering: true, body) = {
+#let equate(number-mode: "block", sub-numbering: true, debug: false, body) = {
   // Validate parameters
   assert(
     number-mode in ("label", "line", "block"),
@@ -13,6 +13,10 @@
   assert(
     type(sub-numbering) == bool,
     message: "invalid sub-numbering, expected a boolean value"
+  )
+  assert(
+    type(debug) == bool,
+    message: "invalid debug, expected a boolean value"
   )
 
   // Store the current settings in the state.
@@ -23,6 +27,14 @@
 
   // Prevent figures meant for referencing from being displayed.
   show figure.where(body: [], kind: math.equation): none
+
+  // Show alignment spacers when debugging.
+  let spacer = selector.or(
+    box.where(body: none, fill: yellow, stroke: stroke(0.4pt)),
+    box.where(body: none, fill: green, stroke: stroke(0.4pt))
+  )
+  show spacer: it => if debug { it } else { hide(it) }
+  show spacer: set box(height: 0.4em) if debug
 
   show math.equation.where(block: true): it => {
     // Don't apply the rule to revoked equations.
@@ -162,3 +174,6 @@ $ e^2 &= 0 \ 1+1 &= 2 $ <y>
 $ e^2 = 0 $ <z>
 
 #outline(target: figure.where(kind: math.equation))
+
+$ a &= b           &        &=i            \
+    &= cases(a, b) &+ x y z &= x $
