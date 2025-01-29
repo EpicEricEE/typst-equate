@@ -3,8 +3,10 @@
 #import "common.typ": revoked, equate-state
 #import "process.typ": to-lines, process-line, numbered
 
+#let nesting-state = state("equate/nesting", 0)
+
 // Parameters of the equate function.
-#let equate(number-mode: "block", sub-numbering: true, debug: false, body) = {
+#let equate(number-mode: "line", sub-numbering: false, debug: false, body) = {
   // Validate parameters
   assert(
     number-mode in ("label", "line", "block"),
@@ -39,6 +41,8 @@
   show math.equation.where(block: true): it => {
     // Don't apply the rule to revoked equations.
     if it.has("label") and it.label == <equate:revoke> { return it }
+    // Don't apply the rule to nested equations.
+    if nesting-state.get() > 0 { return it }
 
     let lines = {
       // First, split the equation into lines and extract any labels.
@@ -54,7 +58,7 @@
       array.zip(exact: true, lines, revoked, labels)
         .map(((line, revoked, label)) => {
           let line = (body: line.join(), revoked: revoked, label: label)
-          line.numbered = numbered(line, number-mode, it.has("label"))
+          line.numbered = numbered(line, number-mode, it)
           line
         })
     }
@@ -72,17 +76,21 @@
         message: "cannot label individual lines in block numbering mode"
       )
 
-      let numbering = (..) => numbering(it.numbering, ..counter(math.equation).get())
+      let numbering = if it.numbering != none {
+        (..) => numbering(it.numbering, ..counter(math.equation).get())
+      }
 
       revoked(
         numbering: numbering,
-        lines.map(line => line.body).join(linebreak()) + h(0pt) + figure(
-          none,
-          caption: [],
-          kind: math.equation,
-          supplement: it.supplement,
-          numbering: numbering
-        )
+        lines.map(line => line.body).join(linebreak()) + if numbering != none {
+          h(0pt) + figure(
+            none,
+            caption: [],
+            kind: math.equation,
+            supplement: it.supplement,
+            numbering: numbering
+          )
+        }
       )
       counter(math.equation).update(n => n - 1)
     } else {
@@ -141,6 +149,15 @@
         counter(math.equation).step()
       }
     }
+  }
+
+  // Prevent nested equations from messing with the layout.
+  show math.equation.where(block: true): it => {
+    set math.equation(numbering: none)
+    
+    nesting-state.update(n => n + 1)
+    it
+    nesting-state.update(n => n - 1)
   }
 
   body

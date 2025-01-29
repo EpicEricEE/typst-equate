@@ -42,7 +42,7 @@
     combine-sub-state().update(state => (
       lines: state.lines + lines,
       numbered: state.numbered or lines.any(line => {
-        numbered(line, number-mode, it.has("label"))
+        numbered(line, number-mode, it)
       })
     ))
 
