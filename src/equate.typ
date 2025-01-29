@@ -5,44 +5,63 @@
 
 #let nesting-state = state("equate/nesting", 0)
 
-// Parameters of the equate function.
-#let equate(number-mode: "line", sub-numbering: false, debug: false, body) = {
+#let equate(
+  number-mode: auto,
+  sub-numbering: auto,
+  debug: auto,
+  body
+) = {
   // Validate parameters
   assert(
-    number-mode in ("label", "line", "block"),
+    number-mode in ("label", "line", "block", auto),
     message: "invalid number-mode, expected 'label', 'line', or 'block'"
   )
   assert(
-    type(sub-numbering) == bool,
+    type(sub-numbering) == bool or sub-numbering == auto,
     message: "invalid sub-numbering, expected a boolean value"
   )
   assert(
-    type(debug) == bool,
+    type(debug) == bool or debug == auto,
     message: "invalid debug, expected a boolean value"
   )
 
-  // Store the current settings in the state.
-  equate-state.update(stack => stack + ((
-    number-mode: number-mode,
-    sub-numbering: sub-numbering
-  ),))
+  // This state stores a "style chain" as a stack. With each equate call, the
+  // current settings are pushed onto the stack, inherting from the previous
+  // settings when a parameter is set to `auto`.
+  equate-state.update(stack => {
+    let resolve-auto(val, prev) = if val == auto { prev } else { val }
+    let prev = stack.at(-1, default: (
+      number-mode: "line",
+      sub-numbering: false,
+      debug: false
+    ))
 
-  // Prevent figures meant for referencing from being displayed.
-  show figure.where(body: [], kind: math.equation): none
-
-  // Show alignment spacers when debugging.
-  let spacer = selector.or(
-    box.where(body: none, fill: yellow, stroke: stroke(0.4pt)),
-    box.where(body: none, fill: green, stroke: stroke(0.4pt))
-  )
-  show spacer: it => if debug { it } else { hide(it) }
-  show spacer: set box(height: 0.4em) if debug
+    stack + ((
+      number-mode: resolve-auto(number-mode, prev.number-mode),
+      sub-numbering: resolve-auto(sub-numbering, prev.sub-numbering),
+      debug: resolve-auto(debug, prev.debug)
+    ),)
+  })
 
   show math.equation.where(block: true): it => {
     // Don't apply the rule to revoked equations.
     if it.has("label") and it.label == <equate:revoke> { return it }
     // Don't apply the rule to nested equations.
     if nesting-state.get() > 0 { return it }
+
+    // Extract settings from the state.
+    let (sub-numbering, number-mode, debug) = equate-state.get().last()
+
+    // Prevent figures meant for referencing from being displayed.
+    show figure.where(body: [], kind: math.equation): none
+
+    // Show alignment spacers when debugging.
+    let spacer = selector.or(
+      box.where(body: none, fill: yellow, stroke: stroke(0.4pt)),
+      box.where(body: none, fill: green, stroke: stroke(0.4pt))
+    )
+    show spacer: it => if debug { it } else { hide(it) }
+    show spacer: set box(height: 0.4em) if debug
 
     let lines = {
       // First, split the equation into lines and extract any labels.
