@@ -1,7 +1,7 @@
 #import "align.typ": realign
 #import "combine.typ": combine, combine-state, combined-lines
 #import "common.typ": revoked, equate-state
-#import "process.typ": to-lines, process-line
+#import "process.typ": to-lines, process-line, numbered
 
 // Parameters of the equate function.
 #let equate(number-mode: "block", sub-numbering: true, debug: false, body) = {
@@ -47,21 +47,16 @@
       ))
 
       // Realign the lines considering all lines in the current combine block.
-      let consider = combined-lines().map(process-line).map(line => line.body)
+      let consider = combined-lines().map(line => line.body)
       lines = realign(lines, consider: consider)
 
       // Transpose the data to create a dictionary for each line.
       array.zip(exact: true, lines, revoked, labels)
-        .map(((line, revoked, label)) => (
-          body: line.join(),
-          revoked: revoked,
-          label: label,
-          numbered: (
-            (number-mode == "block") or
-            (number-mode == "line" and not revoked) or
-            (number-mode == "label" and (label != none or (it.has("label") and not revoked)))
-          )
-        ))
+        .map(((line, revoked, label)) => {
+          let line = (body: line.join(), revoked: revoked, label: label)
+          line.numbered = numbered(line, number-mode, it.has("label"))
+          line
+        })
     }
 
     if it.numbering != none {
@@ -153,27 +148,3 @@
   // Remove the current settings from the state.
   equate-state.update(stack => stack.slice(0, -1))
 }
-
-#set math.equation(numbering: "(1.1)")
-#show: equate.with(number-mode: "label")
-
-#combine(numbering: true)[
-  Let's start with some content...
-  $ &y + b $
-  _Look, there's a normal paragraph inbetween, but the alignment *and* numbering continues!_
-  $ &x^2 + y \
-    &22x - v = 22z $
-]
-
-Now the combined equation is done, and we're "back to the root"
-
-$ e^2 = 0 $
-
-$ e^2 &= 0 \ 1+1 &= 2 $ <y>
-
-$ e^2 = 0 $ <z>
-
-#outline(target: figure.where(kind: math.equation))
-
-$ a &= b           &        &=i            \
-    &= cases(a, b) &+ x y z &= x $

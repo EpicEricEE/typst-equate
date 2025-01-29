@@ -1,8 +1,12 @@
 #import "common.typ": equate-state
-#import "process.typ": to-lines
+#import "process.typ": to-lines, process-line, numbered
 
 #let combine-state = state("equate/combine", (:))
 #let combine-counter = counter("equate/combine/counter")
+#let combine-sub-state() = {
+  let num = combine-counter.get().first()
+  state("equate/combine/" + str(num), (lines: (), numbered: false))
+}
 
 // Retrieve all lines from the current combine-block that should be considered
 // during alignment.
@@ -10,9 +14,7 @@
   if not combine-state.get().at("align", default: false) {
     return ()
   }
-  let num = combine-counter.get().first()
-  let lines-state = state("equate/combine/" + str(num), ())
-  lines-state.final()
+  combine-sub-state().final().lines
 }
 
 // Combine multiple equations into a single equation.
@@ -36,9 +38,13 @@
     if it.has("label") and it.label == <equate:revoke> { return it }
 
     // Push the lines of the current equation into the alignment state.
-    let lines = to-lines(it)
-    let num = combine-counter.get().first()
-    state("equate/combine/" + str(num)).update(l => l + lines)
+    let lines = to-lines(it).map(process-line)
+    combine-sub-state().update(state => (
+      lines: state.lines + lines,
+      numbered: state.numbered or lines.any(line => {
+        numbered(line, number-mode, it.has("label"))
+      })
+    ))
 
     it
 
@@ -52,13 +58,15 @@
 
   body
 
-  combine-state.update((:))
-
   // If numbering is shared, only update the counters at the end of the block
-  // now that all equations have been processed.
+  // after all equations with the same main number have been processed.
   if sub-numbering and numbering {
-    // TODO: Don't step when no numbered equation in block
-    counter(math.equation).step()
+    // Don't step when no numbered equation in block
+    context if combine-sub-state().final().numbered {
+      counter(math.equation).step()
+    }
     counter("equate/line").update(0)
   }
+  
+  combine-state.update((:))
 }

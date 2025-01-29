@@ -1,19 +1,25 @@
 #import "src/equate.typ": *
 
-#set page(height: 4cm)
-
 #set math.equation(numbering: "(1.1)")
-#show math.equation.where(block: true): set block(breakable: true)
-#show: equate.with(number-mode: "block", sub-numbering: true)
+#show: equate.with(number-mode: "block")
 
-$ a $ <outer>
+#combine(numbering: true)[
+  Let's start with some content...
+  $ &y + b $
+  _Look, there's a normal paragraph inbetween, but the alignment *and* numbering continues!_
+  $ &x^2 + y \
+    &22x - v = 22z $ <a>
+]
 
-#lorem(5) \
-#lorem(5)
+Now the combined equation is done, and we're "back to the root"
 
-$ a + b &= c +& d &= e \
-      f &= g  &   &= h \
-     2i &     &   &= i + j \
-        &     & j &= i $ <total>
+$ e^2 = 0 $
 
-@total
+$ e^2 &= 0 \ 1+1 &= 2 $ <y>
+
+$ e^2 = 0 $ <z>
+
+#outline(target: figure.where(kind: math.equation))
+
+$ a &= b           &        &=i            \
+    &= cases(a, b) &+ x y z &= x $

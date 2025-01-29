@@ -17,13 +17,12 @@
   lines
 }
 
-#let numbered(line, number-mode) = {
+#let numbered(line, number-mode, outer-label) = {
   let (.., revoked, label) = line
-  // TODO: Find out how to get it.has("label")
   return (
     (number-mode == "block") or
     (number-mode == "line" and not revoked) or
-    (number-mode == "label" and (label != none or (it.has("label") and not revoked)))
+    (number-mode == "label" and (label != none or (outer-label and not revoked)))
   )
 }
 
