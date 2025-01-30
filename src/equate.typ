@@ -56,7 +56,7 @@
         (..) => {
           let main = counter(math.equation).get().first()
           let sub  = counter("equate/line").get().first()
-          let nums = if sub-numbering and total > 1 { (main, sub) } else { (main,) }
+          let nums = (main,) + if sub-numbering and total > 1 { (sub,) }
           numbering(it.numbering, ..nums) 
         }
       }
