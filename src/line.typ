@@ -1,3 +1,5 @@
+#import "combine.typ": combined-equations
+
 /// Extract the "real" label from an equation line (if any) and returns the
 /// line without the label, and the extracted label itself.
 #let process-line(line) = {
@@ -62,14 +64,15 @@
   }
 
   if number-mode == "label" {
-    if label != none { return true }
-
-    // If only the parent equation is labeled, all lines should be numbered.
-    // However, as soon as a single line is labeled, only labeled lines should
-    // be numbered.
-    if parent.has("label") {
-      return to-lines(parent).all(line => line.label == none) and not revoked
-    }
+    let combined = (combined-equations() + (parent,))
+    let lines = combined.map(to-lines).flatten()
+    let has-label = combined.any(eq => eq.has("label"))
+    return (
+      // Always number if this line has a label.
+      label != none
+      // Number if no other line has a label, but there is an outer label.
+      or (has-label and not revoked and lines.all(line => line.label == none))
+    )
   }
 
   false

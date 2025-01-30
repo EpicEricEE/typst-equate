@@ -1,5 +1,5 @@
 #import "align.typ": realign
-#import "combine.typ": combine, combine-state, combined-lines
+#import "combine.typ": combine, combine-state, combined-equations
 #import "common.typ": revoked, equate-state
 #import "line.typ": to-lines, numbered
 
@@ -30,10 +30,10 @@
     }
   )
 
-  // Step back counter to continue with the same main number in the next
-  // equation. We cannot allow the step here, as we might need the same
-  // main number when in a combine block.
-  counter(math.equation).update(n => n - 1)
+  // Step back counter so that we end with the value of this block.
+  if numbering != none {
+    counter(math.equation).update(n => n - 1)
+  }
 }
 
 // Layout every line in a separate equation, so that each line can be assigned
@@ -47,7 +47,7 @@
       
       // Total number of lines in the equation.
       let total = if combine-state.get().at("numbering", default: false) {
-        combined-lines().len()
+        combined-equations().map(to-lines).flatten().len()
       } else {
         lines.len()
       }
@@ -75,10 +75,13 @@
         ],
       )
 
-      if sub-numbering and line.numbered {
-        // Step back counter to continue with the same main number in the
-        // next line.
-        counter(math.equation).update(n => n - 1)
+      if line.numbered {
+        // Step back counter so that we end with the values of the last
+        // numbered line.
+        let is-last = lines.filter(line => line.numbered).at(-1, default: none) == line
+        if sub-numbering or is-last {
+          counter(math.equation).update(n => n - 1)
+        }
       }
     })
   )
@@ -149,7 +152,7 @@
       )
 
       // Realign the lines considering all lines in the current combine block.
-      let consider = combined-lines().map(line => line.body)
+      let consider = combined-equations().map(to-lines).flatten().map(line => line.body)
       lines = realign(lines, consider: consider)
 
       // Transpose the data to create a dictionary for each line.
@@ -169,18 +172,33 @@
     // Layout the equation.
     if number-mode == "block" {
       layout-block(it, lines)
+    } else if number-mode == "label" {
+      let all-lines = lines + combined-equations().map(to-lines).flatten()
+      let has-label = (combined-equations() + (it,)).any(eq => eq.has("label"))
+      if all-lines.all(line => line.label == none) and has-label {
+        layout-block(it, lines)
+      } else {
+        layout-grid(it, lines, sub-numbering)
+      }
     } else {
       layout-grid(it, lines, sub-numbering)
     }
 
-    // After the last line, the counter has to be stepped again, so that the main
-    // number is increased for the next equation. When in a combine block, this
-    // is done at the end of the block or equation. Otherwise, it is done here.
-    if combine-state.get() == (:) {
+    let reset = lines.any(line => line.numbered) and (
+      // Reset if every line is numbered independently.
+      (number-mode in "line" and not sub-numbering)
+      // Reset if numbering should not be shared across equations.
+      or (not combine-state.get().at("numbering", default: false))
+      // Reset if the current equation is the last in a combine block.
+      or (combined-equations().filter(eq => {
+        let (number-mode,) = equate-state.at(eq.location()).last()
+        to-lines(eq).any(line => numbered(line, number-mode, eq))
+      }).at(-1, default: none) == it)
+    )
+
+    if reset {
       counter("equate/line").update(0)
-      if (number-mode == "block" or sub-numbering) and lines.any(line => line.numbered) {
-        counter(math.equation).step()
-      }
+      counter(math.equation).step()
     }
   }
 
