@@ -287,15 +287,15 @@
       .map(((i, line)) => {
         if i in revoked {
           // Remove "revoke" label and space and return line.
-          line.remove(-1)
-          if line.at(-2, default: none) == [ ] { line.remove(-2) }
+          let _ = line.remove(-1)
+          let _ = if line.at(-2, default: none) == [ ] { line.remove(-2) }
           return line
         }
 
         if i not in labelled { return line }
 
         // Remove trailing spacing (before label).
-        if line.at(-2, default: none) == [ ] { line.remove(-2) }
+        let _ = if line.at(-2, default: none) == [ ] { line.remove(-2) }
 
         // Append sub-numbering.
         let nums = main-number + if numbered.len() > 0 {
@@ -313,7 +313,7 @@
           supplement: supplement
         )#label(line.last().text.slice(1, -1))]
 
-        return line
+        line
       })
   )
 }
@@ -326,9 +326,9 @@
     if line.last().lang != "typc" { return line }
     if line.last().text.match(regex("^<.+>$")) == none { return line }
 
-    line.remove(-1)
-    if line.at(-1, default: none) == [ ] { line.remove(-1) }
-    return line
+    let _ = line.remove(-1)
+    let _ = if line.at(-1, default: none) == [ ] { line.remove(-1) }
+    line
   })
 }
 
