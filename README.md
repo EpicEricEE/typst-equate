@@ -56,7 +56,7 @@ Since this package reimplements the equation alignment system in pure Typst, it 
 ## Example
 
 ```typ
-#import "@preview/equate:0.3.0": equate
+#import "@preview/equate:0.3.1": equate
 
 #show: equate.with(breakable: true, sub-numbering: true)
 #set math.equation(numbering: "(1.1)")
