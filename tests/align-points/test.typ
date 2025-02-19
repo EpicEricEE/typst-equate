@@ -22,10 +22,10 @@ $ "text" & "text" \
 
 // Cases below taken from Typst test suite.
 
-$ "a" &= c \
-      &= c + 1          & "By definition" \
-      &= d + 100 + 1000 \
-      &= x              &                 & "Even longer" \
+$ a &= c \
+    &= c + 1          & "By definition" \
+    &= d + 100 + 1000 \
+    &= x              &                 & "Even longer" \
 $
 
 $                    & "right" \
