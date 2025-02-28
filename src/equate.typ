@@ -77,6 +77,8 @@
     ) <equate:revoke>
   ]
 
+  let height(body) = measure(equation(body)).height
+
   let children = if eq.body.func() == sequence {
     eq.body.children
   } else {
@@ -87,39 +89,64 @@
     if type(child) != content or child.func() != math.lr {
       child
     } else {
-      let size = if child.has("size") { child.size } else {
-        let lines = if child.body.func() == sequence {
-          child.body.children.split(linebreak())
-        } else {
-          ((child.body,),)
-        }
-        
-        // This measured size may differ a bit from what Typst uses internally.
-        calc.max(..lines.map(line => measure(text(
-          top-edge: "bounds",
-          bottom-edge: "bounds",
-          equation(line.join())
-        )).height))
-      }
-
       // Unwrap nested lr elements (e.g. `lr(size: #2em, (a + b))`)
+      let lr-size = child.fields().at("size", default: 100%)
       if child.body.func() == math.lr {
         child = child.body
+        if child.has("size") { lr-size = child.size }
       }
 
-      if child.body.func() != sequence {
-        math.stretch(size: size, child.body)
+      let lines = if child.body.func() == sequence {
+        child.body.children.split(linebreak())
       } else {
-        let (first, ..mid, last) = child.body.children
-        // Manually stretch first/last and mid elements.
-        math.stretch(size: size, first)
+        ((child.body,),)
+      }
+
+      let (first, ..mid, last) = if child.body.func() == sequence {
+        child.body.children
+      } else {
+        ([], child.body, [])
+      }
+
+      // Don't take unstretchable boundaries into account.
+      if height(first) == height(math.stretch(size: 200%, first)) {
+        mid = (first, ..mid)
+        first = none
+      }
+      if height(last) == height(math.stretch(size: 200%, last)) {
+        mid = (..mid, last)
+        last = none
+      }
+
+      let size = calc.max(..lines.map(line => {
+        height(math.lr(size: lr-size, first + line.join() + last))
+      }))
+
+      // Manually stretch first/last and mid elements.
+      let stretched(first, mid, last, size) = {
+        if first != none { math.stretch(size: size, first) }
         mid.map(child => if child.func() == math.mid {
           math.class("large", math.stretch(size: size, child))
         } else {
           child
         }).join()
-        math.stretch(size: size, last)
+        if last != none { math.stretch(size: size, last) }
       }
+
+      // Take possible short-fall into account. We may need multiple iterations
+      // to ensure that the stretched height matches the original height, and
+      // that the middle elements are stretched to the same size.
+      let shortfall = 0pt
+      for i in range(5) {
+        let delta = calc.max(..lines.map(line => {
+          height(stretched(first, line, last, size - shortfall))
+        })) - size
+
+        if delta == 0pt { break }
+        shortfall += delta
+      }
+
+      stretched(first, mid, last, size - shortfall)
     }
   }).join())
 }

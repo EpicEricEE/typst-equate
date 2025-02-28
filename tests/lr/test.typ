@@ -22,3 +22,5 @@ $ a + lr(size: #1cm, (b +& c mid(|) \
 
 $ a + lr(size: #1cm, (b +& c mid(|) \
        mid(|) d +& e)) + f $
+
+$ [1/(2/(3/(4/5)))] $
