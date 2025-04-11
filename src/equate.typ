@@ -494,7 +494,8 @@
 
     let num = share-align-state.get().stack.last()
     let align-state = state("equate/align/" + str(num), ())
-    align-state.update(lines => lines + to-lines(it))
+    let lines = to-lines(it)
+    align-state.update(total-lines => total-lines + lines)
     it
   }
 
