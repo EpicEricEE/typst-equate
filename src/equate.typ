@@ -185,7 +185,9 @@
   text-dir: auto,
   line
 ) = context {
-  let equation(body) = [
+  let equation(body, measure: false) = [
+    // We may need to measure the width of the equation, so it has to be auto.
+    #show math.equation: set block(width: auto) if measure
     #math.equation(
       block: true,
       numbering: _ => none,
@@ -230,7 +232,7 @@
   // on both sides of the equation to keep the center alignment.
 
   let num = box(width: number-width, align(number-align, number))
-  let line-width = measure(equation(line.join())).width
+  let line-width = measure(equation(line.join(), measure: true)).width
   let gap = 0.5em
 
   layout(bounds => {
@@ -364,6 +366,8 @@
 #let realign(lines) = {
   // Utility shorthand for unnumbered block equation.
   let equation(body) = [
+    // We need this for measuring the width, so it has to be auto.
+    #show math.equation: set block(width: auto)
     #math.equation(
       block: true,
       numbering: none,
