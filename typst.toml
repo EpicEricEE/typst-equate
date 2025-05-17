@@ -1,6 +1,6 @@
 [package]
 name = "equate"
-version = "0.3.1"
+version = "0.3.2"
 entrypoint = "src/lib.typ"
 compiler = "0.12.0"
 authors = ["Eric Biedert"]

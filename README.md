@@ -25,8 +25,6 @@ Some notes about these parameters:
       &= sqrt(p^2 c^2 + m^2 c^4) #<long> $
   ```
 
-In Typst versions prior to v0.12.0, equation numbers were centered in equation blocks, even for single-line equations. This package corrects that behavior by aligning numbers with the baseline of the equation lines instead. Typst v0.12.0 has an internal fix for this, but the package's layout adjustments remain in place for backward compatibility with earlier versions.
-
 ### The revoke label
 
 The `<equate:revoke>` label can be used on an equation or a specific equation line for the following purposes:
@@ -56,7 +54,7 @@ Since this package reimplements the equation alignment system in pure Typst, it 
 ## Example
 
 ```typ
-#import "@preview/equate:0.3.1": equate
+#import "@preview/equate:0.3.2": equate
 
 #show: equate.with(breakable: true, sub-numbering: true)
 #set math.equation(numbering: "(1.1)")
