@@ -208,9 +208,6 @@
     }
   }
 
-  // Start of equation block.
-  let x-start = here().position().x
-
   // Resolve number width.
   let number-width = if number-width == auto {
     measure(number).width
@@ -236,7 +233,11 @@
   let gap = 0.5em
 
   layout(bounds => {
-    let space = if equation-align == center {
+    let space = if bounds.width.pt().is-infinite() {
+      // If we're in an unbounded container, the number is placed right next to
+      // the equation body, with only the `gap` as spacing.
+      0pt
+    } else if equation-align == center {
       bounds.width - line-width - 2 * number-width
     } else {
       bounds.width - line-width - number-width
