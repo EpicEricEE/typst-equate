@@ -85,7 +85,7 @@
     (eq.body,)
   }
 
-  math.equation(children.map(child => {
+  let replace-single(child) = {
     if type(child) != content or child.func() != math.lr {
       child
     } else {
@@ -128,7 +128,7 @@
         mid.map(child => if child.func() == math.mid {
           math.class("large", math.stretch(size: size, child))
         } else {
-          child
+          replace-single(child)
         }).join()
         if last != none { math.stretch(size: size, last) }
       }
@@ -148,7 +148,9 @@
 
       stretched(first, mid, last, size - shortfall)
     }
-  }).join())
+  }
+
+  math.equation(children.map(replace-single).join())
 }
 
 // Extract lines and trim spaces.
