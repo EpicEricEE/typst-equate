@@ -274,7 +274,8 @@
   number-mode,
   numbering,
   supplement,
-  has-label
+  has-label,
+  revoke-by-default
 ) = {
   // Main equation number.
   let main-number = counter(math.equation).get()
@@ -295,7 +296,7 @@
   let revoked = lines
     .enumerate()
     .filter(((i, line)) => {
-      if i not in labelled { return false }
+      if i not in labelled { return revoke-by-default }
       return line.last().text == "<equate:revoke>"
     })
     .map(((i, _)) => i)
@@ -530,6 +531,7 @@
   breakable: auto,
   sub-numbering: false,
   number-mode: "line",
+  revoke-by-default: false,
   debug: false,
   body
 ) = {
@@ -620,7 +622,8 @@
       number-mode,
       it.numbering,
       it.supplement,
-      it.has("label")
+      it.has("label"),
+      revoke-by-default
     )
 
     // Short-circuit for single-line equations.
