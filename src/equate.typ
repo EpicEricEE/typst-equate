@@ -126,7 +126,7 @@
       let stretched(first, mid, last, size) = {
         if first != none { math.stretch(size: size, first) }
         mid.map(child => if child.func() == math.mid {
-          math.class("large", math.stretch(size: size, child))
+          math.class("fence", math.stretch(size: size, child))
         } else {
           replace-single(child)
         }).join()
