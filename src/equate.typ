@@ -44,17 +44,20 @@
     message: "cannot reference equation without numbering."
   )
 
-  let num = numbering(
-    if type(it.element.numbering) == str {
-      // Trim numbering pattern of prefix and suffix characters.
-      let counting-symbols = ("1", "a", "A", "i", "I", "一", "壹", "あ", "い", "ア", "イ", "א", "가", "ㄱ", "*", "①", "⓵")
-      let prefix-end = it.element.numbering.codepoints().position(c => c in counting-symbols)
-      let suffix-start = it.element.numbering.codepoints().rev().position(c => c in counting-symbols)
-      it.element.numbering.slice(prefix-end, if suffix-start == 0 { none } else { -suffix-start })
-    } else {
-      it.element.numbering
-    },
-    ..nums
+  let numbering = if type(it.element.numbering) == str {
+    // Trim numbering pattern of prefix and suffix characters.
+    let counting-symbols = ("1", "a", "A", "i", "I", "一", "壹", "あ", "い", "ア", "イ", "א", "가", "ㄱ", "*", "①", "⓵")
+    let prefix-end = it.element.numbering.codepoints().position(c => c in counting-symbols)
+    let suffix-start = it.element.numbering.codepoints().rev().position(c => c in counting-symbols)
+    it.element.numbering.slice(prefix-end, if suffix-start == 0 { none } else { -suffix-start })
+  } else {
+    it.element.numbering
+  }
+
+  // Evaluate numbering in context of equation, but with custom numbers.
+  let num = it.element.counter.display(
+    (..) => std.numbering(numbering, ..nums),
+    at: it.element.location()
   )
 
   let supplement = if it.supplement == auto {

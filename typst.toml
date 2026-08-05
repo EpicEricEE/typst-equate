@@ -2,7 +2,7 @@
 name = "equate"
 version = "0.3.3"
 entrypoint = "src/lib.typ"
-compiler = "0.14.0"
+compiler = "0.15.0"
 authors = ["Eric Biedert"]
 repository = "https://github.com/EpicEricEE/typst-equate"
 license = "MIT"
