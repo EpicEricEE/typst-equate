@@ -122,7 +122,7 @@
         let stretch-if-delimiter(elem, apply) = {
           let class = if elem.has("class") {
             elem.class
-          } else if elem.has("text") and elem.text.len() == 1 {
+          } else if elem.has("text") and elem.text.codepoints().len() == 1 {
             unichar.codepoint(elem.text).math-class
           }
 
