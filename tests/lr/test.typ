@@ -29,3 +29,6 @@ $ a + [&b + c + (d + \
        &e + f)] $
 
 $ partial abs(x) $
+
+#set math.lr(size: 1em)
+$ (1/(2/3)) $
