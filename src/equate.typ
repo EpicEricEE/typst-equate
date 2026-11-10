@@ -95,7 +95,7 @@
       child
     } else {
       // Unwrap nested lr elements (e.g. `lr(size: #2em, (a + b))`)
-      let lr-size = child.fields().at("size", default: 100%)
+      let lr-size = child.fields().at("size", default: math.lr.size)
       if child.body.func() == math.lr {
         child = child.body
         if child.has("size") { lr-size = child.size }
